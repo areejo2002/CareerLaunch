@@ -1,0 +1,462 @@
+using System;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Microsoft.SemanticKernel;
+using CareerLaunchpad.Models;
+using CareerLaunchpad.Interfaces;
+
+namespace CareerLaunchpad.Interfaces
+{
+
+    namespace CareerLaunchpad.Services
+    {
+        public class AIPortfolio : IAIPortfolio
+        {
+            private readonly Kernel _kernel;
+
+            public AIPortfolio(Kernel kernel)
+            {
+                _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
+            }
+
+            public async Task<Portfolio> PortfolioParse(string input)
+            {
+                var prompt = @"
+You are a helpful AI assistant whose job is to take raw portfolio form data (provided below)
+and output a single, valid JSON object in English only matching this schema exactly:
+
+{
+  ""firstName"": string,
+  ""lastName"": string,
+  ""contactInfo"": string | null,
+  ""personalImage"": string | null,
+  ""services"": [
+    {
+      ""id"": string,
+      ""serviceName"": string,
+      ""serviceDescription"": string | null
+    }
+  ],
+  ""projects"": [
+    {
+      ""id"": string,
+      ""projectName"": string,
+      ""projectDescription"": string | null,
+      ""startDate"": ""YYYY-MM-DD"" | null,
+      ""endDate"": ""YYYY-MM-DD"" | null,
+      ""projectAttachments"": string | null,
+      ""serviceIndex"": integer
+    }
+  ]
+}
+
+– Generate a unique string `id` (for example a GUID) for each service and each project.
+– If any field is missing or empty, use `null`.
+– If a list is empty, use `[]`.
+– Translate any non-English text to English before generating the JSON.
+
+Portfolio Text:
+{{$input}}
+
+JSON:";
+
+
+                // create a Semantic Kernel function from the prompt
+                var function = _kernel.CreateFunctionFromPrompt(prompt);
+
+                // invoke with the raw input
+                var result = await _kernel.InvokeAsync(function, new()
+                {
+                    ["input"] = input
+                });
+
+                // extract the JSON string
+                var json = result.GetValue<string>() ?? string.Empty;
+
+                // deserialize into Portfolio model
+                var portfolio = JsonSerializer.Deserialize<Portfolio>(
+                    json,
+                    new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        AllowTrailingCommas = true
+                    }
+                )!;
+
+                return portfolio;
+            }
+
+            public async Task<string> GenerateBioAsync(Portfolio portfolio)
+            {
+                var sbPrompt = new StringBuilder();
+                sbPrompt.AppendLine("Generate a concise, engaging professional portfolio bio in English only.");
+                sbPrompt.AppendLine($"Name: {portfolio.FirstName} {portfolio.LastName}");
+                sbPrompt.AppendLine($"Contact Info: {portfolio.ContactInfo ?? "N/A"}");
+                sbPrompt.AppendLine("Services:");
+                if (portfolio.Services?.Any() == true)
+                {
+                    foreach (var s in portfolio.Services)
+                        sbPrompt.AppendLine($"- {s.ServiceName}: {s.Servicedescription ?? "No description provided"}");
+                }
+                else
+                {
+                    sbPrompt.AppendLine("- None");
+                }
+
+                sbPrompt.AppendLine("Projects:");
+                if (portfolio.Projects?.Any() == true)
+                {
+                    foreach (var p in portfolio.Projects)
+                        sbPrompt.AppendLine(
+                            $"- {p.ProjectName}: {p.Description} " +
+                            $"({p.StartDate:yyyy-MM-dd} to {p.EndDate:yyyy-MM-dd})"
+                        );
+                }
+                else
+                {
+                    sbPrompt.AppendLine("- None");
+                }
+
+                sbPrompt.AppendLine("\nWrite the bio in 2–3 sentences and end with a call-to-action.");
+
+                var result = await _kernel.InvokePromptAsync(sbPrompt.ToString());
+                return result.GetValue<string>()?.Trim() ?? string.Empty;
+            }
+
+            public string BuildHtmlPreview(Portfolio p)
+            {
+                var sb = new StringBuilder();
+                // HTML5 Template with modern, immersive design
+                sb.AppendLine("<!DOCTYPE html>");
+                sb.AppendLine("<html lang=\"en\">\n");
+                sb.AppendLine("<head>");
+                sb.AppendLine("  <meta charset=\"UTF-8\">\n");
+                sb.AppendLine("  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n");
+                sb.AppendLine($"  <title>{p.FirstName} {p.LastName} | Portfolio</title>");
+                sb.AppendLine("  <!-- Google Fonts -->");
+                sb.AppendLine("  <link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap\" rel=\"stylesheet\">\n");
+                sb.AppendLine("  <!-- Font Awesome for icons -->");
+                sb.AppendLine("  <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css\">\n");
+                sb.AppendLine("  <style>");
+                sb.AppendLine("    :root { ");
+                sb.AppendLine("      --clr-primary: #00574C; ");
+                sb.AppendLine("      --clr-secondary: #00BFA6; ");
+                sb.AppendLine("      --clr-bg: #F4F6F8; ");
+                sb.AppendLine("      --clr-light: #FFFFFF; ");
+                sb.AppendLine("      --clr-text: #333333; ");
+                sb.AppendLine("      --font-sans: 'Inter', sans-serif; ");
+                sb.AppendLine("      --transition: 0.3s ease-in-out; ");
+                sb.AppendLine("    }");
+                sb.AppendLine("    * { margin:0; padding:0; box-sizing:border-box; scroll-behavior: smooth; }");
+                sb.AppendLine("    body { font-family: var(--font-sans); background: var(--clr-bg); color: var(--clr-text); }");
+                sb.AppendLine("    a { color: var(--clr-secondary); text-decoration: none; transition: var(--transition); }");
+                sb.AppendLine("    a:hover { color: var(--clr-primary); }");
+                sb.AppendLine("    .container { width: 90%; max-width: 1100px; margin: 2rem auto; }");
+                sb.AppendLine("    header { position: relative; padding: 4rem 1rem; background: linear-gradient(145deg, var(--clr-primary), var(--clr-secondary)); text-align: center; border-radius: 12px; overflow: hidden; }");
+                sb.AppendLine("    header::before { content: ''; position: absolute; top: -20%; left: -20%; width: 140%; height: 140%; background: rgba(255,255,255,0.1); transform: rotate(45deg); }");
+                sb.AppendLine("    .profile-pic { width: 160px; height: 160px; object-fit: cover; border-radius: 50%; border: 6px solid var(--clr-light); margin: 0 auto 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,0.15); position: relative; z-index:1; }");
+                sb.AppendLine("    header h1 { font-size: 2.8rem; color: var(--clr-light); font-weight: 700; margin-bottom: 0.5rem; position: relative; z-index:1; }");
+                sb.AppendLine("    header p.subtitle { font-size: 1.2rem; color: var(--clr-light); opacity: 0.85; margin-bottom: 0; position: relative; z-index:1; }");
+                sb.AppendLine("    section { margin-top: 3rem; }");
+                sb.AppendLine("    section h2 { font-size: 2rem; color: var(--clr-primary); border-bottom: 3px solid var(--clr-secondary); display: inline-block; margin-bottom: 1rem; }");
+                sb.AppendLine("    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2rem; }");
+                sb.AppendLine("    .card { background: var(--clr-light); border-radius: 8px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); transition: transform var(--transition), box-shadow var(--transition); }");
+                sb.AppendLine("    .card:hover { transform: translateY(-8px); box-shadow: 0 12px 32px rgba(0,0,0,0.1); }");
+                sb.AppendLine("    .card h3 { font-size: 1.4rem; margin-bottom: 0.75rem; }");
+                sb.AppendLine("    .card p { font-size: 1rem; margin-bottom: 1rem; line-height: 1.6; }");
+                sb.AppendLine("    .card .icon { font-size: 1.5rem; color: var(--clr-secondary); margin-bottom: 0.75rem; }");
+                sb.AppendLine("    ul { list-style: none; padding-left: 0; }");
+                sb.AppendLine("    ul li { position: relative; padding-left: 1.5rem; margin-bottom: 0.75rem; }");
+                sb.AppendLine("    ul li::before { content: '\\f058'; font-family: 'Font Awesome 5 Free'; font-weight: 900; position: absolute; left: 0; color: var(--clr-primary); }");
+                sb.AppendLine("    footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: #777; }");
+                sb.AppendLine("    @media (max-width:768px) { header { padding: 3rem 1rem; } .profile-pic { width: 120px; height: 120px; margin-bottom: 1rem; } }");
+                sb.AppendLine("  </style>");
+                sb.AppendLine("</head>");
+                sb.AppendLine("<body>");
+                // Accent Color Picker
+                sb.AppendLine("  <div id=\"theme-switcher\" style=\"position:fixed;top:1rem;right:1rem;background:rgba(255,255,255,0.9);padding:.5rem 1rem;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,0.1);z-index:999;font-size:.85rem;\">");
+                sb.AppendLine("    <label>Choose Color: <input type=\"color\" id=\"accentPicker\" value=\"#00574C\" style=\"border:none;width:1.5rem;height:1.5rem;vertical-align:middle;cursor:pointer;margin-left:.5rem;\" /></label>");
+                sb.AppendLine("  </div>");
+                sb.AppendLine("  <header>");
+                if (!string.IsNullOrEmpty(p.PersonalImage))
+                    sb.AppendLine($"    <img src=\"{p.PersonalImage}\" alt=\"{p.FirstName} {p.LastName}\" class=\"profile-pic\" />");
+                sb.AppendLine($"    <h1>{p.FirstName} {p.LastName}</h1>");
+                if (!string.IsNullOrEmpty(p.JobTitle))
+                    sb.AppendLine($"    <p class=\"subtitle\">{p.JobTitle}</p>");
+                sb.AppendLine("  </header>\n");
+                sb.AppendLine("  <div class=\"container\">\n");
+                // About
+                sb.AppendLine("    <section>\n      <h2>About Me</h2>");
+                sb.AppendLine(!string.IsNullOrEmpty(p.Bio)
+                    ? $"      <p>{p.Bio}</p>"
+                    : "      <p>No bio available.</p>");
+                sb.AppendLine("    </section>\n");
+                // Services
+                sb.AppendLine("    <section>\n      <h2>Services</h2>\n      <div class=\"grid\">\n");
+                if (p.Services?.Any() == true)
+                {
+                    foreach (var s in p.Services)
+                    {
+                        var desc = !string.IsNullOrWhiteSpace(s.Servicedescription) ? $"<p>{s.Servicedescription}</p>" : "";
+                        sb.AppendLine($"        <div class=\"card\">\n          <div class=\"icon\"><i class='fas fa-briefcase'></i></div>\n          <h3>{s.ServiceName}</h3>\n          {desc}\n        </div>");
+                    }
+                }
+                else sb.AppendLine("        <div class=\"card\">No services listed.</div>");
+                sb.AppendLine("      </div>\n    </section>\n");
+                // Projects
+                sb.AppendLine("    <section>\n      <h2>Projects</h2>\n      <div class=\"grid\">\n");
+                if (p.Projects?.Any() == true)
+                {
+                    foreach (var pr in p.Projects)
+                    {
+                        var dates = pr.StartDate.HasValue && pr.EndDate.HasValue ? $"{pr.StartDate:MMM yyyy} – {pr.EndDate:MMM yyyy}" : "";
+                        var desc = !string.IsNullOrWhiteSpace(pr.Description) ? $"<p>{pr.Description}</p>" : "";
+                        var attach = !string.IsNullOrWhiteSpace(pr.ProjectAttachments)
+                            ? $"<p><a href=\"{pr.ProjectAttachments}\" target=\"_blank\">View Attachment</a></p>"
+                            : "";
+                        sb.AppendLine($"        <div class=\"card\">\n          <div class=\"icon\"><i class='fas fa-project-diagram'></i></div>\n          <h3>{pr.ProjectName}</h3>\n          <p><em>{dates}</em></p>\n          {desc}\n          {attach}\n        </div>");
+                    }
+                }
+                else sb.AppendLine("        <div class=\"card\">No projects listed.</div>");
+                sb.AppendLine("      </div>\n    </section>\n");
+                // Contact
+                if (!string.IsNullOrWhiteSpace(p.ContactInfo))
+                {
+                    sb.AppendLine("    <section>\n      <h2>Contact</h2>\n      <p><i class='fas fa-envelope'></i> " + p.ContactInfo + "</p>\n    </section>\n");
+                }
+                // Share button
+                sb.AppendLine("    <button id=\"shareBtn\" style=\"display:block;margin:2rem auto;padding:.5rem 1rem;background:var(--clr-secondary);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:1rem;\">Share This Page</button>");
+                sb.AppendLine("    <footer>© " + DateTime.Now.Year + " " + p.FirstName + " " + p.LastName + " – Portfolio Template</footer>\n");
+                sb.AppendLine("  </div>\n");
+                // Scripts
+                sb.AppendLine("  <script>");
+                sb.AppendLine("    document.getElementById('accentPicker').addEventListener('input', function(e) {");
+                sb.AppendLine("      document.documentElement.style.setProperty('--clr-primary', e.target.value);");
+                sb.AppendLine("    });");
+                sb.AppendLine("    document.getElementById('shareBtn').addEventListener('click', function() {");
+                sb.AppendLine("      var url = window.location.href;");
+                sb.AppendLine("      navigator.clipboard.writeText(url).then(function() { alert('Link copied: ' + url); });");
+                sb.AppendLine("    });");
+                sb.AppendLine("  </script>");
+                sb.AppendLine("</body>");
+                sb.AppendLine("</html>");
+
+                return sb.ToString();
+            }
+
+            public string BuildHtmlPreviewDark(Portfolio p)
+            {
+                var year = DateTime.Now.Year;
+                var first = p.FirstName;
+                var last = p.LastName;
+                var bio = string.IsNullOrWhiteSpace(p.Bio)
+                    ? "No bio available."
+                    : p.Bio;
+
+                // Build Services HTML
+                var servicesHtml = p.Services?.Any() == true
+                    ? string.Join("", p.Services.Select(s => $@"
+        <div class=""card"">
+          <h3>{s.ServiceName}</h3>
+          <p>{(string.IsNullOrWhiteSpace(s.Servicedescription)
+                            ? "No description."
+                            : s.Servicedescription)}</p>
+        </div>"))
+                    : @"<div class=""card""><p>No services listed.</p></div>";
+
+                // Build Projects HTML
+                var projectsHtml = p.Projects?.Any() == true
+                    ? string.Join("", p.Projects.Select(pr => {
+                        var dates = pr.StartDate.HasValue && pr.EndDate.HasValue
+                            ? $"{pr.StartDate:MMM yyyy} – {pr.EndDate:MMM yyyy}"
+                            : "Dates N/A";
+                        return $@"
+        <div class=""card"">
+          <h3>{pr.ProjectName}</h3>
+          <p style=""font-style:italic;color:#666;margin-bottom:.5rem;"">{dates}</p>
+          <p>{(string.IsNullOrWhiteSpace(pr.Description)
+                            ? "No description."
+                            : pr.Description)}</p>
+        </div>";
+                    }))
+                    : @"<div class=""card""><p>No projects listed.</p></div>";
+
+                // Contact info (if any)
+                var contact = string.IsNullOrWhiteSpace(p.ContactInfo)
+                    ? ""
+                    : $"<li>{p.ContactInfo}</li>";
+
+                // Default theme colors
+                var defaultAccent = "#00796B";
+                var darkColor = "#333333";
+                var lightColor = "#fafafa";
+
+                // Generate full HTML with embedded Share button
+                return $@"<!DOCTYPE html>
+<html lang=""en"">
+<head>
+  <meta charset=""UTF-8"">
+  <meta name=""viewport"" content=""width=device-width,initial-scale=1"">
+  <title>{first} {last} — Portfolio</title>
+  <link href=""https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap"" rel=""stylesheet"">
+  <style>
+    :root {{
+      --accent: {defaultAccent};
+      --dark:   {darkColor};
+      --light:  {lightColor};
+      --font:   'Rubik', sans-serif;
+    }}
+    * {{ margin:0; padding:0; box-sizing:border-box; }}
+    body {{ display:flex; min-height:100vh; font-family:var(--font); background:var(--light); color:var(--dark); }}
+    /* Accent Color Picker */
+    #theme-switcher {{
+      position: fixed; top:1rem; right:1rem;
+      background:rgba(255,255,255,0.9);
+      padding:.5rem 1rem; border-radius:6px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      font-size:.85rem; z-index:999;
+    }}
+    #theme-switcher input[type=color] {{
+      border:none; width:1.5rem; height:1.5rem;
+      padding:0; vertical-align:middle; margin-left:.5rem;
+      cursor:pointer;
+    }}
+    aside.sidebar {{
+      width:280px; background:var(--accent); color:#fff;
+      display:flex; flex-direction:column; align-items:center;
+      padding:2rem 1rem; flex-shrink:0;
+    }}
+    aside.sidebar img {{
+      width:120px; height:120px; border-radius:50%;
+      object-fit:cover; border:3px solid var(--dark);
+      margin-bottom:1rem;
+    }}
+    aside.sidebar h1 {{ font-size:1.8rem; margin-bottom:.25rem; }}
+    aside.sidebar p.title {{ font-weight:500; color:var(--dark); margin-bottom:1rem; }}
+    aside.sidebar ul.contact {{ list-style:none; font-size:.9rem; padding-left:0; }}
+    main.main {{
+      flex:1; overflow-y:auto; padding:2rem; background:#fff;
+    }}
+    section {{ margin-bottom:2rem; }}
+    section h2 {{
+      font-size:1.6rem; color:var(--accent);
+      border-bottom:2px solid var(--dark);
+      display:inline-block; margin-bottom:1rem;
+    }}
+    .about p {{ line-height:1.6; }}
+    .grid {{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+      gap:1rem;
+    }}
+    .card {{
+      background:var(--light); border-radius:8px; padding:1rem;
+      box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      transition:transform .2s;
+    }}
+    .card:hover {{ transform:translateY(-4px); }}
+    .card h3 {{ margin-bottom:.5rem; color:var(--dark); }}
+    .card p {{ font-size:.9rem; color:#555; }}
+    /* Share button style */
+    #shareBtn {{
+      display:block;
+      margin:2rem auto 0;
+      padding:.5rem 1rem;
+      background:var(--accent);
+      color:#fff;
+      border:none;
+      border-radius:4px;
+      cursor:pointer;
+      font-size:1rem;
+    }}
+    #shareBtn:hover {{
+      opacity:.85;
+    }}
+    footer {{ text-align:center; font-size:.8rem; color:#666; padding-top:2rem; }}
+    @media(max-width:768px) {{
+      body {{ flex-direction:column; }}
+      aside.sidebar {{
+        width:100%; flex-direction:row;
+        justify-content:center; flex-wrap:wrap;
+        padding:1rem;
+      }}
+      aside.sidebar h1, aside.sidebar p.title {{ margin:0 .5rem; }}
+      main.main {{ padding:1rem; }}
+      #theme-switcher {{ top:auto; bottom:1rem; }}
+    }}
+  </style>
+</head>
+<body>
+
+  <!-- Accent Picker -->
+  <div id=""theme-switcher"">
+    <label>Choose Color:
+      <input type=""color"" id=""accentPicker"" value=""{defaultAccent}"" />
+    </label>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class=""sidebar"">
+    {(string.IsNullOrEmpty(p.PersonalImage)
+                    ? ""
+                    : $"<img src=\"{p.PersonalImage}\" alt=\"{first}\" />")}
+    <h1>{first} {last}</h1>
+    <p class=""title"">{p.JobTitle}</p>
+    <ul class=""contact"">
+      {contact}
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class=""main"">
+    <section id=""about"">
+      <h2>About Me</h2>
+      <p>{bio}</p>
+    </section>
+
+    <section id=""services"">
+      <h2>Services</h2>
+      <div class=""grid"">
+        {servicesHtml}
+      </div>
+    </section>
+
+    <section id=""projects"">
+      <h2>Projects</h2>
+      <div class=""grid"">
+        {projectsHtml}
+      </div>
+    </section>
+
+    <!-- Share Button -->
+    <button id=""shareBtn"">Share This Portfolio</button>
+
+    <footer>© {year} {first} {last}</footer>
+  </main>
+
+  <script>
+    // Accent color picker
+    document.getElementById('accentPicker').addEventListener('input', e => {{
+      document.documentElement.style.setProperty('--accent', e.target.value);
+    }});
+
+    // Share button copies real URL
+    document.getElementById('shareBtn').addEventListener('click', () => {{
+      const url = window.location.href;
+      navigator.clipboard.writeText(url)
+        .then(() => alert('Link copied to clipboard:\\n' + url))
+        .catch(() => alert('Copy failed.'));
+    }});
+  </script>
+</body>
+</html>";
+            }
+
+
+
+        }
+    }
+}
+
