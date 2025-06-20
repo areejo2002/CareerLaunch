@@ -1,0 +1,174 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<Person> SignInManager
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Career LaunchPad</title>
+
+    <!-- Favicons -->
+    <link rel="icon" href="~/assets/img/favicon.png" />
+    <link rel="apple-touch-icon" href="~/assets/img/apple-touch-icon.png" />
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
+
+    <!-- Vendor CSS -->
+    <link href="~/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
+    <link href="~/assets/vendor/aos/aos.css" rel="stylesheet" />
+    <link href="~/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet" />
+
+    <!-- Main CSS -->
+    <link href="~/assets/css/main.css" rel="stylesheet" />
+
+    <!-- Always-dark header override -->
+    <style>
+        :root {
+            --bs-header-bg: rgba(0, 87, 76, 0.95);
+            --bs-header-bg-scrolled: rgba(0, 87, 76, 1);
+        }
+
+        .header {
+            background-color: var(--bs-header-bg) !important;
+            transition: background-color 0.3s ease;
+        }
+
+            .header.header-scrolled {
+                background-color: var(--bs-header-bg-scrolled) !important;
+            }
+
+            .header .logo .sitename,
+            .header .navmenu a,
+            .header .navmenu form .nav-link {
+                color: #fff !important;
+            }
+
+                .header .navmenu a.active {
+                    font-weight: 600;
+                }
+        /* Ensure nav-link form button looks like link */
+        .navmenu form .nav-link {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+        }
+    </style>
+
+    @RenderSection("Styles", required: false)
+</head>
+<body class="index-page">
+
+    <!-- ======= Header ======= -->
+    <header id="header" class="header fixed-top d-flex align-items-center">
+        <div class="container d-flex align-items-center justify-content-between">
+
+            <a asp-controller="Home" asp-action="Index"
+               class="logo d-flex align-items-center text-decoration-none">
+                <h1 class="sitename mb-0">Career LaunchPad</h1>
+            </a>
+
+            <nav id="navmenu" class="navmenu">
+                <ul class="list-unstyled d-flex mb-0">
+                    <li class="me-4">
+                        <a asp-controller="Home" asp-action="Index" class="active">Home</a>
+                    </li>
+                    <li class="me-4">
+                        <a asp-controller="Resume" asp-action="Index">My Resumes</a>
+                    </li>
+                    <li class="me-4">
+                        <a asp-controller="Portfolio" asp-action="Index">My Portfolios</a>
+                    </li>
+                    <li>
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <form asp-area="Identity" asp-page="/Account/Logout" method="post">
+                                <button type="submit" class="nav-link">Logout</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a asp-area="Identity" asp-page="/Account/Login">Login</a>
+                        }
+                    </li>
+                </ul>
+                <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+            </nav><!-- .navmenu -->
+
+        </div>
+    </header><!-- End Header -->
+
+    <main id="main" class="pt-5 mt-4">
+        @RenderBody()
+    </main><!-- End #main -->
+    <!-- ======= Footer ======= -->
+    <footer id="footer" class="footer light-background py-4">
+        <div class="container text-center">
+            <div class="row gy-3">
+                <div class="col-md-4">
+                    <i class="bi bi-geo-alt icon"></i>
+                    <div>
+                        <h4>Address</h4>
+                        <p>A108 Adam Street<br />New York, NY 535022</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <i class="bi bi-telephone icon"></i>
+                    <div>
+                        <h4>Contact</h4>
+                        <p><strong>Phone:</strong> +1 5589 55488 55<br /><strong>Email:</strong> info@example.com</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <i class="bi bi-clock icon"></i>
+                    <div>
+                        <h4>Opening Hours</h4>
+                        <p><strong>Mon-Sat:</strong> 11AM - 11PM<br /><strong>Sunday</strong>: Closed</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <div class="social-links d-flex justify-content-center gap-3">
+                    <a href="#" class="twitter"><i class="bi bi-twitter"></i></a>
+                    <a href="#" class="facebook"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="instagram"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="linkedin"><i class="bi bi-linkedin"></i></a>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <p>© @DateTime.Now.Year <strong>Career LaunchPad</strong>. All Rights Reserved.</p>
+                <p class="credits">Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a></p>
+            </div>
+        </div>
+    </footer><!-- End Footer -->
+
+    <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
+        <i class="bi bi-arrow-up-short"></i>
+    </a>
+    <div id="preloader"></div>
+
+    <!-- Vendor JS Files -->
+    <script src="~/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/assets/vendor/aos/aos.js"></script>
+    <script src="~/assets/vendor/swiper/swiper-bundle.min.js"></script>
+
+    <!-- Main JS File -->
+    <script src="~/assets/js/main.js"></script>
+
+    <script>
+        // toggle stronger header background on scroll
+        window.addEventListener('scroll', function () {
+          const hdr = document.getElementById('header');
+          if (window.scrollY > 50) hdr.classList.add('header-scrolled');
+          else hdr.classList.remove('header-scrolled');
+        });
+    </script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
