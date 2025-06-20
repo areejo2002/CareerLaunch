@@ -1,0 +1,345 @@
+
+using System.Text;
+using System.Text.Json;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
+
+namespace CareerLaunchpad.Services
+{
+    public class AIResume : IAIResume
+    {
+        private Kernel _kernel;
+
+        public AIResume(Kernel kernel)
+        {
+            _kernel = kernel;
+        }
+        public async Task<Resume> ResumeParse(string input)
+        {
+            var prompt = @"
+       You are a helpful AI assistant whose job is to take raw resume/ form data(provided below)
+            and output a single, valid JSON object in English only. If any part of the input is in another
+            language, translate it into English before proceeding.Use all details you can glean from the
+            Summary field to craft a strong, concise personal headline and a powerful professional summary.
+            Enhance or expand any sparse content to make it more impactful, but do not invent credentials the
+            user never provided.
+ 
+            Below is the EXACT schema for the JSON you must produce.Do not add any extra keys.Fill in
+            every key; if a section has no data, use null(for single‐value fields) or an empty array(for lists).
+ 
+Convert the following unstructured CV text into JSON with the structure:
+{
+  ""FirstName"": string,
+  ""LastName"": string,
+  ""Email"": string ,
+  ""PhoneNumber"": string ,
+  ""Bio"": string | null,
+  ""Educations"": [
+    {
+      ""CollageName"": string,
+      ""DegreeType"": string,
+      ""Major"": string,
+      ""StartDate"": ""YYYY-MM-DD"" | null,
+      ""EndDate"": ""YYYY-MM-DD"" | null,
+      ""GPA"""": a number (like 3.5) or null, never a string or 'null'
+    }
+  ],
+  ""Experiences"": [
+    {
+      ""Title"": string,
+      ""Company"": string,
+      ""StartDate"": ""YYYY-MM-DD"" | null,
+      ""EndDate"": ""YYYY-MM-DD"" | null,
+      ""IsCurrent"": boolean,
+      ""Duties"": string | null
+    }
+  ],
+  ""Certificates"": [
+    {
+      ""ProviderName"": string | null,
+      ""TopicName"": string | null,
+      ""StartDate"": ""YYYY-MM-DD"" | null,
+      ""EndDate"": ""YYYY-MM-DD"" | null,
+      ""GPA"""": a number (like 3.5) or null, never a string or 'null'
+
+    }
+  ],
+  ""Skills"": [
+    {
+      ""SkillType"": string | null,
+      ""SkillName"": string
+    }
+  ],
+  ""Languages"": [
+    {
+      ""Name"": string,
+      ""Level"": string | null
+    }
+  ]
+}
+IF any field is not present, use Not null as the value and if it was array use empty array [].
+CV TEXT:
+{{$input}}
+ 
+JSON:";
+
+
+            
+            var function = _kernel.CreateFunctionFromPrompt(prompt);
+
+
+            var result = await _kernel.InvokeAsync(function, new()
+            {
+                ["input"] = input
+            });
+
+            var json = result.ToString();
+
+            var resume = JsonSerializer.Deserialize<Resume>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                AllowTrailingCommas = true
+            });
+
+            return resume!;
+        }
+        public string BuildHtmlPreview(Resume resume)
+        {
+            // تأمين القيم الافتراضية
+            resume.FirstName ??= "Not Provided";
+            resume.LastName ??= "Not Provided";
+            resume.Bio ??= "Not Provided";
+            resume.Email ??= "Not Provided";
+            resume.PhoneNumber ??= "Not Provided";
+
+            var sb = new StringBuilder();
+
+            sb.Append($@"
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <title>{resume.FirstName} {resume.LastName} - Resume</title>
+    <!-- Roboto Font -->
+    <link href='https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap' rel='stylesheet'>
+    <style>
+        :root {{
+            --primary-color: #115e59;
+            --accent-color: #14b8a6;
+            --bg-light: #f5f7fa;
+            --text-dark: #34495e;
+            --section-bg: #fff;
+        }}
+        * {{ box-sizing:border-box; margin:0; padding:0; }}
+        body {{
+            font-family:'Roboto',sans-serif;
+            background:var(--bg-light);
+            color:var(--text-dark);
+            padding:20px;
+        }}
+        .container {{
+            max-width:900px;
+            margin:auto;
+            background:var(--section-bg);
+            border-radius:8px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.1);
+        }}
+        header {{
+            background:var(--primary-color);
+            color:#fff;
+            padding:40px 20px;
+            text-align:center;
+        }}
+        header h1 {{ font-size:3em; font-weight:600; }}
+        .contact {{ margin-top:10px; font-size:.9em; color:#ecf0f1; }}
+
+        .main {{ display:flex; flex-wrap:wrap; }}
+        aside.sidebar {{
+            flex:0 0 220px;
+            background:var(--accent-color);
+            color:#fff;
+            padding:20px;
+        }}
+        aside.sidebar h2 {{
+            font-size:1.1em; margin-bottom:10px;
+            border-bottom:1px solid rgba(255,255,255,0.3);
+            padding-bottom:5px;
+        }}
+        aside.sidebar ul {{ list-style:none; margin-top:10px; }}
+        aside.sidebar li {{ margin-bottom:8px; font-size:.9em; }}
+
+        section.content {{ flex:1; padding:30px; }}
+        .section {{ margin-bottom:30px; }}
+        .section h2 {{
+            font-size:1.3em;
+            color:var(--primary-color);
+            margin-bottom:15px;
+            border-bottom:2px solid var(--accent-color);
+            padding-bottom:5px;
+        }}
+        .section div, .section ul {{ margin-left:15px; }}
+
+        .btn-download {{
+            display:inline-block;
+            margin-top:20px;
+            padding:10px 20px;
+            background:var(--accent-color);
+            color:#fff;
+            text-decoration:none;
+            border-radius:4px;
+            font-weight:500;
+            transition:background .3s;
+        }}
+        .btn-download:hover {{ background:#0f766e; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <header>
+            <h1>{resume.FirstName} {resume.LastName}</h1>
+            <div class='contact'>
+                {resume.Email} | {resume.PhoneNumber}
+            </div>
+        </header>
+        <div class='main'>
+            <aside class='sidebar'>
+                <h2>Skills</h2>
+                <ul>
+                    {(resume.Skills != null && resume.Skills.Count > 0
+                                ? string.Join("", resume.Skills.Select(s => $"<li>{s.SkillName}</li>"))
+                                : "<li>No skills listed</li>")}
+                </ul>
+                <h2>Languages</h2>
+                <ul>
+                    {(resume.Languages != null && resume.Languages.Count > 0
+                                ? string.Join("", resume.Languages.Select(l => $"<li>{l.Name} ({l.Level})</li>"))
+                                : "<li>No languages listed</li>")}
+                </ul>
+            </aside>
+            <section class='content'>
+                <div class='section'>
+                    <h2>Bio</h2>
+                    <p>{resume.Bio}</p>
+                </div>
+                <div class='section'>
+                    <h2>Education</h2>
+                    {(resume.Educations != null && resume.Educations.Count > 0
+                                ? string.Join("", resume.Educations.Select(e => $@"
+                            <div>
+                                <strong>{e.CollageName}</strong> – {e.Major} ({e.DegreeType})<br/>
+                                <em>{(!string.IsNullOrEmpty(e.StartDate) ? e.StartDate : "N/A")} – {(!string.IsNullOrEmpty(e.EndDate) ? e.EndDate : "N/A")}</em><br/>
+                                {(e.GPA != null ? $"GPA: {e.GPA}" : "")}
+                            </div><br/>"))
+                                : "<div>No education listed.</div>")}
+                </div>
+                <div class='section'>
+                    <h2>Experience</h2>
+                    {(resume.Experiences != null && resume.Experiences.Count > 0
+                                ? string.Join("", resume.Experiences.Select(x =>
+                                {
+                                    var start = !string.IsNullOrEmpty(x.StartDate) ? x.StartDate : "N/A";
+                                    var end = x.IsCurrent == true
+                                        ? "Present"
+                                        : (!string.IsNullOrEmpty(x.EndDate) ? x.EndDate : "N/A");
+                                    return $@"
+                            <div>
+                                <strong>{x.Title ?? "Untitled"}</strong> at {x.Company ?? "Unknown"}<br/>
+                                <em>{start} – {end}</em><br/>
+                                <p>{x.Duties ?? "N/A"}</p>
+                            </div><br/>";
+                                }))
+                                : "<div>No experience listed.</div>")}
+                </div>
+                <div class='section'>
+                    <h2>Certificates</h2>
+                    {(resume.Certificates != null && resume.Certificates.Count > 0
+                                ? string.Join("", resume.Certificates.Select(c =>
+                                {
+                                    var start = !string.IsNullOrEmpty(c.StartDate) ? c.StartDate : "N/A";
+                                    var end = !string.IsNullOrEmpty(c.EndDate) ? c.EndDate : "N/A";
+                                    return $@"
+                            <div>
+                                <strong>{c.TopicName}</strong> from {c.ProviderName}<br/>
+                                <em>{start} – {end}</em>
+                            </div><br/>";
+                                }))
+                                : "<div>No certificates listed.</div>")}
+                </div>
+
+                <!-- زرّ تنزيل PDF أو مشاركة -->
+            </section>
+        </div>
+    </div>
+</body>
+</html>");
+
+            return sb.ToString();
+        }
+
+
+
+        public string GeneratePlainTextFromResume(Resume resume)
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"{resume.FirstName} {resume.LastName}");
+            sb.AppendLine($"Email: {resume.Email} | Phone: {resume.PhoneNumber}");
+            sb.AppendLine($"Bio: {resume.Bio}");
+            sb.AppendLine();
+
+            if (resume.Educations != null && resume.Educations.Count > 0)
+            {
+                sb.AppendLine("Educations:");
+                foreach (var edu in resume.Educations)
+                {
+                    sb.AppendLine($"{edu.DegreeType} in {edu.Major} at {edu.CollageName} ({edu.StartDate} - {edu.EndDate})" +
+                                  $"{(edu.GPA != null ? $", GPA: {edu.GPA}" : "")}");
+                }
+                sb.AppendLine();
+            }
+
+            if (resume.Experiences != null && resume.Experiences.Count > 0)
+            {
+                sb.AppendLine("Experiences:");
+                foreach (var exp in resume.Experiences)
+                {
+                    sb.AppendLine($"{exp.Title} at {exp.Company} ({exp.StartDate} - {(exp.IsCurrent == true ? "Present" : exp.EndDate)})" +
+                                  $"{(!string.IsNullOrWhiteSpace(exp.Duties) ? $", Duties: {exp.Duties}" : "")}");
+                }
+                sb.AppendLine();
+            }
+
+            if (resume.Certificates != null && resume.Certificates.Count > 0)
+            {
+                sb.AppendLine("Certificates:");
+                foreach (var cert in resume.Certificates)
+                {
+                    sb.AppendLine($"{cert.TopicName} from {cert.ProviderName} ({cert.StartDate} - {cert.EndDate})" +
+                                  $"{(cert.GPA != null ? $", GPA: {cert.GPA}" : "")}");
+                }
+                sb.AppendLine();
+            }
+
+            if (resume.Skills != null && resume.Skills.Count > 0)
+            {
+                sb.AppendLine("Skills:");
+                foreach (var skill in resume.Skills)
+                {
+                    sb.AppendLine($"{skill.SkillName}{(!string.IsNullOrEmpty(skill.SkillType) ? $" - {skill.SkillType}" : "")}");
+                }
+                sb.AppendLine();
+            }
+
+            if (resume.Languages != null && resume.Languages.Count > 0)
+            {
+                sb.AppendLine("Languages:");
+                foreach (var lang in resume.Languages)
+                {
+                    sb.AppendLine($"{lang.Name}{(!string.IsNullOrEmpty(lang.Level) ? $" - Level: {lang.Level}" : "")}");
+                }
+            }
+
+            return sb.ToString();
+        }
+    }
+}
