@@ -1,0 +1,506 @@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<Person> SignInManager
+
+<header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container position-relative d-flex align-items-center justify-content-between">
+
+        <a href="~/" class="logo d-flex align-items-center me-auto me-xl-0">
+            <h1 class="sitename">Career LaunchPad</h1>
+        </a>
+
+        <nav id="navmenu" class="navmenu">
+            <ul>
+                <li><a href="/Home/Index" class="active">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#Resume">Resume</a></li>
+                <li><a href="#Portfolio">Portfolio</a></li>
+                <li><a href="#Services">Services</a></li>
+                <li><a href="#contact">Contact</a></li>
+                @if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
+                {
+                    <li><a asp-controller="Admin" asp-action="Index">Dashboard</a></li>
+                }
+            </ul>
+            <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+        </nav>
+
+        @* Authentication & Role-based Buttons *@
+        @if (SignInManager.IsSignedIn(User))
+        {
+            <div class="ms-auto d-flex align-items-center">
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="Admin"
+                       asp-action="Index"
+                       class="btn btn-outline-light rounded-pill me-2"
+                       role="button">
+                        Dashboard
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="Resume"
+                       asp-action="Index"
+                       class="btn btn-outline-light rounded-pill me-2"
+                       role="button">
+                        My Resumes
+                    </a>
+                    <a asp-controller="Portfolio"
+                       asp-action="Index"
+                       class="btn btn-outline-light rounded-pill me-2"
+                       role="button">
+                        My Portfolios
+                    </a>
+                }
+
+                <form asp-area="Identity"
+                      asp-page="/Account/Logout"
+                      method="post"
+                      class="m-0">
+                    <button type="submit"
+                            class="btn btn-danger rounded-pill">
+                        Logout
+                    </button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex align-items-center gap-2">
+                <a class="btn btn-outline-light rounded-pill px-4 fw-semibold me-1"
+                   asp-area="Identity" asp-page="/Account/Register">
+                    Register
+                </a>
+                <a class="btn btn-outline-light rounded-pill px-4 fw-semibold"
+                   asp-area="Identity" asp-page="/Account/Login"
+                   asp-route-returnUrl="@Url.Action("Index", "Home")">
+                    Login
+                </a>
+            </div>
+        }
+
+    </div>
+</header>
+
+<section id="hero" class="hero section dark-background" style="margin-top: -115px;">
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <div class="hero-content" data-aos="fade-up" data-aos-delay="200">
+                    <h2>Build your Professional Resume and Portfolio</h2>
+                    <p>
+                        Create stunning resumes and portfolios that showcase your skills, achievements, and personal brand. Stand out from the crowd with a professional and modern design tailored to your career journey.
+                        Start building your resume today—simple, fast, and free.
+                    </p>
+                    <div class="hero-btns">
+                        <a href="/Resume/Create" class="btn btn-primary">Create Resume</a>
+                        <a href="/Portfolio/Create" class="btn btn-outline">Create Portfolio</a>
+                    </div>
+                    <div class="hero-stats">
+                        <!-- stats here -->
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-image" data-aos="zoom-out" data-aos-delay="300">
+                    <img src="/assets/img/about/about-21.webp" alt="Resume Maker" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
+ 
+    }
+</section>
+
+<!-- بقية الأقسام تبقى كما هي -->
+<!-- /Hero Section -->
+<!-- About Section -->
+
+<section id="about" class="about section">
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+        <div class="row align-items-center">
+            <div class="col-lg-6" data-aos="zoom-out" data-aos-delay="200">
+                <div class="about-image">
+                    <img src="assets/img/about/about-square-12.webp" alt="About Our Consulting Firm" class="img-fluid main-image">
+                    <div class="experience-badge">
+                        <span class="years">15+</span>
+                        <span class="text">Years of Experience</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6" data-aos="fade-up" data-aos-delay="300">
+                <div class="about-content">
+                    <h2>We Help you build proffesional Resume and Portfolio</h2>
+                    <p>
+                        At Career LauchPad,we provide an intuitive platform to create professional resumes and portfolios effortlessly. Our goal is to empower users to showcase their skills, achievements, and career journey in a clean, modern format.
+
+                        With easy-to-use templates and customization options, we make it simple to build a portfolio and resume that stand out.
+
+                    </p>
+
+                    <div class="row features-row">
+                        <div class="col-md-6">
+                            <div class="feature-item">
+                                <div class="icon">
+                                    <i class="bi bi-graph-up-arrow"></i>
+                                </div>
+                                <h4>Fast Resume Building</h4>
+                                <p>Create professional resumes in minutes with our smart, guided steps >
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="feature-item">
+                                <div class="icon">
+                                    <i class="bi bi-lightbulb"></i>
+                                </div>
+                                <h4>Showcase Your Portfolio</h4>
+                                <p>Add your projects and services in an elegant, modern layout.</p>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="feature-item">
+                                <div class="icon">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                                <h4>AI-Powered Suggestions</h4>
+                                <p>Let our assistant help you write a compelling bio that reflects your unique strengths.</p>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="feature-item">
+                                <div class="icon">
+                                    <i class="bi bi-trophy"></i>
+                                </div>
+                                <h4>Easy to Customize</h4>
+                                <p>
+                                    Edit your resume and portfolio any time with our user-friendly interface
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cta-button">
+                        <a href="#about" class="btn btn-primary">Learn More About Us</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</section><!-- /About Section -->
+<!-- Work Process Section -->
+<section id="Resume" class="Resume section">
+
+    <!-- Section Title -->
+    <div class="container section-title" data-aos="fade-up">
+        <h2>what is Resume</h2>
+        <div> <span class="description-title">what is Resume</span></div>
+    </div><!-- End Section Title -->
+
+    <style>
+        :root {
+            --bs-primary: #00574C;
+            --bs-secondary: #009688;
+        }
+        /* رفع القسم للأعلى */
+        #resume-info {
+            margin-top: -12rem;
+        }
+            /* لون النص الرئيسي */
+            #resume-info .lead {
+                color: var(--bs-primary);
+            }
+            /* زرّ البداية */
+            #resume-info .btn-primary {
+                background-color: var(--bs-primary);
+                border-color: var(--bs-primary);
+            }
+
+                #resume-info .btn-primary:hover {
+                    background-color: rgba(var(--bs-primary-rgb), 0.8);
+                }
+            #resume-info .btn-outline-primary {
+                color: var(--bs-secondary);
+                border-color: var(--bs-secondary);
+            }
+
+                #resume-info .btn-outline-primary:hover {
+                    background-color: var(--bs-secondary);
+                    color: #fff;
+                }
+    </style>
+
+    <section id="resume-info" class="section d-flex align-items-center" style="min-height: 100vh;">
+        <div class="container" data-aos="fade-up" data-aos-delay="100">
+            <div class="row justify-content-center">
+                <div class="col-lg-6 text-center" data-aos="fade-up" data-aos-delay="200">
+                    <div class="steps-content">
+                        <p class="lead">
+                            A resume is a structured, concise document that summarizes an individual’s professional background. It typically includes key information such as education, work experience, skills, certifications, and accomplishments. Designed to highlight qualifications and career readiness, a resume serves as a marketing tool to attract the attention of employers and recruiters in a competitive job market.
+                        </p>
+                        <div class="steps-cta">
+                            <a href="/Resume/Create" class="btn btn-primary me-2">Create your Resume</a>
+                            <a href="#about" class="btn btn-outline-primary">Learn More</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</section><!-- /Work Process Section -->
+<!-- Services Section -->
+<section id="Portfolio" class="Portfolio section">
+
+    <!-- Section Title -->
+    <div class="container section-title" data-aos="fade-up">
+        <h2> what is Portfolio</h2>
+        <div> <span class="description-title">what is Portfolio</span></div>
+    </div><!-- End Section Title -->
+    <style>
+        :root {
+            --bs-primary: #00574C;
+            --bs-primary-rgb: 0,87,76;
+            --bs-secondary: #009688;
+            --bs-secondary-rgb: 0,150,136;
+        }
+        /* رفع قسم portfolio-info للأعلى */
+        #portfolio-info {
+            margin-top: -14rem;
+        }
+
+            #portfolio-info .portfolio-info-card {
+                max-width: 840px;
+                margin: 0 auto;
+                margin-top: -12rem; /* رفعها للأعلى */
+                box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+                border: none;
+            }
+
+                #portfolio-info .portfolio-info-card .lead {
+                    font-size: 1.75rem;
+                    color: var(--bs-secondary);
+                }
+            /* لون نص المقدمة */
+            #portfolio-info .lead {
+                color: var(--bs-secondary);
+            }
+            /* زر “Create Your Portfolio” */
+            #portfolio-info .btn-primary {
+                background-color: var(--bs-secondary);
+                border-color: var(--bs-secondary);
+            }
+
+                #portfolio-info .btn-primary:hover {
+                    background-color: rgba(var(--bs-secondary-rgb), 0.8);
+                }
+            /* زر “Learn More” */
+            #portfolio-info .btn-outline-primary {
+                color: var(--bs-secondary);
+                border-color: var(--bs-secondary);
+            }
+
+                #portfolio-info .btn-outline-primary:hover {
+                    background-color: var(--bs-secondary);
+                    color: #fff;
+                }
+    </style>
+
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+
+                    <section id="portfolio-info" class="section d-flex align-items-center" style="min-height: 100vh;">
+                        <div class="container" data-aos="fade-up" data-aos-delay="100">
+                            <div class="row justify-content-center">
+                                <div class="col-lg-6 text-center" data-aos="fade-up" data-aos-delay="200">
+                                    <div class="steps-content">
+                                        <p class="lead">
+                                            A professional portfolio is a curated showcase of your best work—projects, case studies, and achievements—that highlights your skills and expertise. It’s your go-to tool for demonstrating real-world results and standing out to recruiters, clients, and hiring managers.
+                                        </p>
+                                        <div class="steps-cta">
+                                            <a href="/Portfolio/Create" class="btn btn-primary me-2">Create Your Portfolio</a>
+                                            <a href="#Portfolio" class="btn btn-outline-primary">Learn More</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+
+
+          
+
+</section><!-- /Services Section -->
+<!-- Consultation Section -->
+<section id="services" class="services section">
+    <div class="container" data-aos="fade-up">
+        <!-- Section Title -->
+        <div class="section-title">
+            <h2>Our Services</h2>
+            <p>What We Offer</p>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 col-lg-3 mb-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="service-card p-4 text-center h-100">
+                    <div class="service-icon mb-3">
+                        <i class="bi bi-file-earmark-person-fill" style="font-size: 2rem; color: var(--bs-primary);"></i>
+                    </div>
+                    <h4>Resume Building</h4>
+                    <p>Create professional resumes in minutes with our intuitive templates.</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3 mb-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="service-card p-4 text-center h-100">
+                    <div class="service-icon mb-3">
+                        <i class="bi bi-briefcase-fill" style="font-size: 2rem; color: var(--bs-primary);"></i>
+                    </div>
+                    <h4>Portfolio Design</h4>
+                    <p>Showcase your projects with a sleek, modern portfolio layout.</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3 mb-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="service-card p-4 text-center h-100">
+                    <div class="service-icon mb-3">
+                        <i class="bi bi-lightbulb-fill" style="font-size: 2rem; color: var(--bs-primary);"></i>
+                    </div>
+                    <h4>AI Suggestions</h4>
+                    <p>Leverage AI-powered tips to enhance your bio and content quality.</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3 mb-4" data-aos="fade-up" data-aos-delay="400">
+                <div class="service-card p-4 text-center h-100">
+                    <div class="service-icon mb-3">
+                        <i class="bi bi-gear-fill" style="font-size: 2rem; color: var(--bs-primary);"></i>
+                    </div>
+                    <h4>Customizable Templates</h4>
+                    <p>Fully editable sections let you tailor designs to your personal brand.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+
+
+    #services {
+        margin-top: -120px; /* pull up by 50px */
+    }
+
+    .service-card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .service-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            #resume-info
+        }
+</style>
+
+<!-- Why Choose Us Section -->
+<!-- Why Choose Us Section -->
+<section id="why-choose-us" class="why-choose-us section">
+    <div class="container" data-aos="fade-up">
+        <!-- Section Title -->
+        <div class="container section-title">
+            <h2>Why Choose Us</h2>
+            <p>Your Success Is Our Priority</p>
+        </div>
+
+        <div class="container" data-aos="fade-up" data-aos-delay="100">
+            <div class="row align-items-center">
+                <!-- Textual Features -->
+                <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="features-content">
+                        <h3>Expertise You Can Trust</h3>
+                        <p class="lead">
+                            With years of industry experience, we know what employers look for. Our platform guides you step-by-step to create resumes and portfolios that stand out.
+                        </p>
+                        <div class="features-list">
+                            <div class="feature-item mb-4">
+                                <div class="feature-icon me-3">
+                                    <i class="bi bi-briefcase-fill" style="font-size: 1.5rem; color: var(--bs-primary);"></i>
+                                </div>
+                                <div class="feature-text">
+                                    <h5>Professional Templates</h5>
+                                    <p>Choose from a curated selection of modern, recruiter-approved designs.</p>
+                                </div>
+                            </div>
+                            <div class="feature-item mb-4">
+                                <div class="feature-icon me-3">
+                                    <i class="bi bi-lightbulb-fill" style="font-size: 1.5rem; color: var(--bs-primary);"></i>
+                                </div>
+                                <div class="feature-text">
+                                    <h5>Smart Suggestions</h5>
+                                    <p>AI-powered tips help you highlight your strengths and achievements.</p>
+                                </div>
+                            </div>
+                            <div class="feature-item mb-4">
+                                <div class="feature-icon me-3">
+                                    <i class="bi bi-people-fill" style="font-size: 1.5rem; color: var(--bs-primary);"></i>
+                                </div>
+                                <div class="feature-text">
+                                    <h5>User-Friendly Interface</h5>
+                                    <p>Intuitive tools make editing and updating your documents a breeze.</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon me-3">
+                                    <i class="bi bi-award-fill" style="font-size: 1.5rem; color: var(--bs-primary);"></i>
+                                </div>
+                                <div class="feature-text">
+                                    <h5>Trusted by Professionals</h5>
+                                    <p>Join thousands of satisfied users who have landed interviews with our help.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Stats -->
+                <div class="col-lg-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="features-image text-center">
+                        <div class="stats-card mb-4">
+                            <div class="stat-item">
+                                <h3>95%</h3>
+                                <p>Client Satisfaction</p>
+                            </div>
+                            <div class="stat-item">
+                                <h3>1,200+</h3>
+                                <p>Resumes Created</p>
+                            </div>
+                            <div class="stat-item">
+                                <h3>850+</h3>
+                                <p>Portfolios Published</p>
+                            </div>
+                            <div class="stat-item">
+                                <h3>10+</h3>
+                                <p>Years of Excellence</p>
+                            </div>
+                        </div>
+                        <img src="assets/img/misc/misc-square-11.webp" alt="Why Choose Us" class="img-fluid main-image">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- /Why Choose Us Section -->
+<!-- Testimonials Section -->
+<!-- /Testimonials Section -->
+<!-- /Contact Section --> 
