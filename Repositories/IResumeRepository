@@ -1,0 +1,24 @@
+using CareerLaunchpad.DTOs;
+using CareerLaunchpad.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace CareerLaunchpad.Repositories
+{
+    public interface IResumeRepository
+    {
+        Task<IEnumerable<Resume>> GetAllAsync();
+        Task<Resume> GetByIdAsync(int id);
+        Task AddResume(Resume resume);
+        void Update(Resume resume);
+        void Delete(Resume resume);
+        Task<bool> SaveChangesAsync();
+        Task<bool> Exists(int id);
+        Task<List<ResumeDto>> GetAllResumes();
+        Task<Resume> GetResumeWithDetailsAsync(int ResumeId);
+        Task<List<Resume>> GetResumesByUserIdAsync(string EndUserId);
+
+    }
+
+}
+
