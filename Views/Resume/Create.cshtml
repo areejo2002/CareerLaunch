@@ -1,0 +1,132 @@
+﻿@model CareerLaunchpad.DTOs.ResumeDto
+
+@{
+    ViewData["Title"] = "Create Resume";
+    Layout = "_Layout";
+}
+
+<section id="resume-create" class="resume-create section light-background py-5">
+    <div class="container">
+
+        <!-- Section Title -->
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Create Your Resume</h2>
+            <p class="text-muted">Build your <span class="fw-semibold text-primary">Professional Resume</span></p>
+        </div>
+
+        <form asp-action="Create" method="post" class="needs-validation" novalidate>
+
+            <!-- Personal Info Card -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title border-bottom pb-2 mb-4">Personal Info</h3>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="FirstName" class="form-label">First Name</label>
+                            <input asp-for="FirstName" class="form-control" placeholder="Enter your first name" required />
+                            <div class="invalid-feedback">
+                                @Html.ValidationMessageFor(m => m.FirstName)
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="LastName" class="form-label">Last Name</label>
+                            <input asp-for="LastName" class="form-control" placeholder="Enter your last name" required />
+                            <div class="invalid-feedback">
+                                @Html.ValidationMessageFor(m => m.LastName)
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="e.g. +1234567890" required />
+                            <div class="invalid-feedback">
+                                @Html.ValidationMessageFor(m => m.PhoneNumber)
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label">Email</label>
+                            <input asp-for="Email" class="form-control" placeholder="your.email@example.com" required />
+                            <div class="invalid-feedback">
+                                @Html.ValidationMessageFor(m => m.Email)
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Bio" class="form-label">Bio</label>
+                            <textarea asp-for="Bio" class="form-control" rows="3" placeholder="Write a brief bio" required></textarea>
+                            <div class="invalid-feedback">
+                                @Html.ValidationMessageFor(m => m.Bio)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Education & Experience Card -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title border-bottom pb-2 mb-4">Education &amp; Experience</h3>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="Educations" class="form-label">Educations</label>
+                            <textarea asp-for="Educations" class="form-control" rows="3"
+                                      placeholder="e.g. BSc Computer Science - XYZ University" required></textarea>
+                            <div class="invalid-feedback">
+                                @Html.ValidationMessageFor(m => m.Educations)
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Experiences" class="form-label">Experiences</label>
+                            <textarea asp-for="Experiences" class="form-control" rows="3"
+                                      placeholder="e.g. Software Developer at Google" required></textarea>
+                            <div class="invalid-feedback">
+                                @Html.ValidationMessageFor(m => m.Experiences)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certificates Card -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title border-bottom pb-2 mb-4">Certificates</h3>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="Certificates" class="form-label">Certificates</label>
+                            <textarea asp-for="Certificates" class="form-control" rows="2"
+                                      placeholder="e.g. AWS Certified, PMP" required></textarea>
+                            <div class="invalid-feedback">
+                                @Html.ValidationMessageFor(m => m.Certificates)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary btn-lg px-5">Submit</button>
+            </div>
+
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // Bootstrap validation
+        (function () {
+          'use strict'
+          var forms = document.querySelectorAll('.needs-validation')
+          Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+              form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                  event.preventDefault()
+                  event.stopPropagation()
+                }
+                form.classList.add('was-validated')
+              }, false)
+            })
+        })();
+    </script>
+}
