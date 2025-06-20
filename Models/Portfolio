@@ -1,0 +1,31 @@
+namespace CareerLaunchpad.Models;
+
+public class Portfolio : PersonalInfo
+{
+    public int PortfolioId { get; set; }
+
+
+    public string? PersonalImage { get; set; }
+
+ 
+    public List<Service> Services { get; set; } = new();
+
+    public List<Project> Projects { get; set; } = new();
+
+
+    public string? ContactInfo { get; set; }
+
+
+    public string? Bio { get; set; }
+
+    public string? JobTitle { get; set; }
+
+   
+    public string EndUserId { get; set; } = null!;
+
+    
+    public EndUser EndUser { get; set; } = null!;
+
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+}
