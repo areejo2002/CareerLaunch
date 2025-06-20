@@ -1,0 +1,13 @@
+using CareerLaunchpad.Models;
+
+namespace CareerLaunchpad.Repositories
+{
+    public interface IContactRequestsRepository
+    {
+      
+        Task<List<ContactRequest>> GetAllAsync();
+
+     
+        Task DeleteAsync(int id);
+    }
+}
