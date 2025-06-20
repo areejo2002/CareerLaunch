@@ -1,0 +1,207 @@
+﻿@model CareerLaunchpad.DTOs.PortfolioDto
+@{
+    ViewData["Title"] = "Edit Portfolio";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+
+<div class="container my-5">
+    <h2 class="mb-4">Edit Portfolio</h2>
+    <form asp-action="Edit" enctype="multipart/form-data" method="post">
+        <input type="hidden" asp-for="PortfolioId" />
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label asp-for="FirstName" class="form-label">First Name</label>
+                <input asp-for="FirstName" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="LastName" class="form-label">Last Name</label>
+                <input asp-for="LastName" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="JobTitle" class="form-label">Job Title</label>
+                <input asp-for="JobTitle" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="ContactInfo" class="form-label">Contact Info</label>
+                <input asp-for="ContactInfo" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                @if (!string.IsNullOrEmpty(Model.ExistingImageUrl))
+                {
+                    <p>Current Profile Image:</p>
+                    <img src="@Model.ExistingImageUrl" class="img-thumbnail mb-2" style="max-height:150px;" />
+                }
+                <label asp-for="PersonalImage" class="form-label">Upload New Profile Image</label>
+                <input asp-for="PersonalImage" type="file" class="form-control" />
+            </div>
+        </div>
+
+        <hr />
+        <!-- Services -->
+        <h4 class="mb-3">Services</h4>
+        <div id="services-container">
+            @for (int i = 0; i < Model.Services.Count; i++)
+            {
+                <div class="card mb-3 p-3" data-index="@i">
+                    <div class="row g-2">
+                        <div class="col-md-5">
+                            <label class="form-label">Service Name</label>
+                            <input name="Services[@i].ServiceName" value="@Model.Services[i].ServiceName" class="form-control" />
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Description</label>
+                            <textarea name="Services[@i].ServiceDescription" class="form-control" rows="1">@Model.Services[i].ServiceDescription</textarea>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-danger remove-service">✕</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <button type="button" class="btn btn-outline-primary mb-4" onclick="addService()">+ Add Service</button>
+
+        <hr />
+        <!-- Projects -->
+        <h4 class="mb-3">Projects</h4>
+        <div id="projects-container">
+            @for (int i = 0; i < Model.Projects.Count; i++)
+            {
+                <div class="card mb-3 p-3" data-index="@i">
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <label class="form-label">Project Name</label>
+                            <input name="Projects[@i].ProjectName" value="@Model.Projects[i].ProjectName" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Description</label>
+                            <textarea name="Projects[@i].ProjectDescription" class="form-control" rows="1">@Model.Projects[i].ProjectDescription</textarea>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" name="Projects[@i].StartDate" value="@(Model.Projects[i].StartDate?.ToString("yyyy-MM-dd"))" class="form-control" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">End Date</label>
+                            <input type="date" name="Projects[@i].EndDate" value="@(Model.Projects[i].EndDate?.ToString("yyyy-MM-dd"))" class="form-control" />
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="button" class="btn btn-danger remove-project">✕</button>
+                        </div>
+                    </div>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-5">
+                            <label class="form-label">Attachment URL</label>
+                            <input name="Projects[@i].ProjectAttachments" value="@Model.Projects[i].ProjectAttachments" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Linked Service</label>
+                            <select name="Projects[@i].ServiceIndex" class="form-select">
+                                @for (int j = 0; j < Model.Services.Count; j++)
+                                {
+                                    <option value="@j" selected="@(j == Model.Projects[i].ServiceIndex)">
+                                        @Model.Services[j].ServiceName
+                                    </option>
+                                }
+
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <button type="button" class="btn btn-outline-primary mb-4" onclick="addProject()">+ Add Project</button>
+
+        <hr />
+        <button type="submit" class="btn btn-success">Save Changes</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function bindRemovers() {
+            document.querySelectorAll(".remove-service").forEach(btn =>
+                btn.onclick = () => btn.closest("[data-index]").remove()
+            );
+            document.querySelectorAll(".remove-project").forEach(btn =>
+                btn.onclick = () => btn.closest("[data-index]").remove()
+            );
+        }
+
+        function addService() {
+            const c = document.getElementById("services-container");
+            const i = c.children.length;
+            c.insertAdjacentHTML("beforeend", `
+                <div class="card mb-3 p-3" data-index="${i}">
+                    <div class="row g-2">
+                        <div class="col-md-5">
+                            <label class="form-label">Service Name</label>
+                            <input name="Services[${i}].ServiceName" class="form-control"/>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Description</label>
+                            <textarea name="Services[${i}].ServiceDescription" class="form-control" rows="1"></textarea>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-danger remove-service">✕</button>
+                        </div>
+                    </div>
+                </div>`);
+            bindRemovers();
+        }
+
+        function addProject() {
+            const c = document.getElementById("projects-container");
+            const i = c.children.length;
+            let options = "";
+            @for (int j = 0; j < Model.Services.Count; j++)
+            {
+                <text>
+                    options += `<option value="@j">@Model.Services[j].ServiceName</option>`;
+                </text>
+            }
+            c.insertAdjacentHTML("beforeend", `
+                <div class="card mb-3 p-3" data-index="${i}">
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <label class="form-label">Project Name</label>
+                            <input name="Projects[${i}].ProjectName" class="form-control"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Description</label>
+                            <textarea name="Projects[${i}].ProjectDescription" class="form-control" rows="1"></textarea>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" name="Projects[${i}].StartDate" class="form-control"/>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">End Date</label>
+                            <input type="date" name="Projects[${i}].EndDate" class="form-control"/>
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="button" class="btn btn-danger remove-project">✕</button>
+                        </div>
+                    </div>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-5">
+                            <label class="form-label">Attachment URL</label>
+                            <input name="Projects[${i}].ProjectAttachments" class="form-control"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Linked Service</label>
+                            <select name="Projects[${i}].ServiceIndex" class="form-select">
+                                ${options}
+                            </select>
+                        </div>
+                    </div>
+                </div>`);
+            bindRemovers();
+        }
+
+        bindRemovers();
+    </script>
+}

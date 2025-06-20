@@ -1,0 +1,315 @@
+﻿@model CareerLaunchpad.DTOs.PortfolioDto
+@{
+    ViewData["Title"] = "Create Portfolio";
+    Layout = "_Layout";
+}
+
+<!-- Bootstrap core CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+
+<!-- Theme color overrides -->
+<style>
+    :root {
+        /* Primary = dark teal, Success = turquoise */
+        --bs-primary: #00574C;
+        --bs-primary-rgb: 0,87,76;
+        --bs-success: #009688;
+        --bs-success-rgb: 0,150,136;
+    }
+    /* Buttons */
+    .btn-primary {
+        background-color: var(--bs-primary) !important;
+        border-color: var(--bs-primary) !important;
+    }
+
+        .btn-primary:hover {
+            background-color: #004f45 !important;
+            border-color: #004f45 !important;
+        }
+
+    .btn-success {
+        background-color: var(--bs-success) !important;
+        border-color: var(--bs-success) !important;
+    }
+
+        .btn-success:hover {
+            background-color: #008e77 !important;
+            border-color: #008e77 !important;
+        }
+    /* Outline variants */
+    .btn-outline-primary {
+        color: var(--bs-primary) !important;
+        border-color: var(--bs-primary) !important;
+    }
+
+        .btn-outline-primary:hover {
+            background-color: var(--bs-primary) !important;
+            color: #fff !important;
+        }
+
+    .btn-outline-success {
+        color: var(--bs-success) !important;
+        border-color: var(--bs-success) !important;
+    }
+
+        .btn-outline-success:hover {
+            background-color: var(--bs-success) !important;
+            color: #fff !important;
+        }
+    /* Card header and progress bar */
+    .bg-primary {
+        background-color: var(--bs-primary) !important;
+    }
+
+    .progress-bar {
+        background-color: var(--bs-primary) !important;
+    }
+</style>
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-1">Create Your Portfolio</h2>
+                    <div class="progress" style="height: 6px;">
+                        <div id="formProgress"
+                             class="progress-bar"
+                             role="progressbar"
+                             style="width: 33%;"></div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+
+                    <form asp-action="Create"
+                          method="post"
+                          id="portfolioForm"
+                          enctype="multipart/form-data">
+
+                        <!-- Step 1 -->
+                        <div class="form-step" data-step="1">
+                            <h5 class="mb-4 text-primary">Step 1: Basic Info</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input asp-for="FirstName"
+                                               class="form-control"
+                                               placeholder="First Name" />
+                                        <label asp-for="FirstName">First Name</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input asp-for="LastName"
+                                               class="form-control"
+                                               placeholder="Last Name" />
+                                        <label asp-for="LastName">Last Name</label>
+                                    </div>
+                                </div>
+
+                                <!-- Contact Info & Job Title side by side -->
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input asp-for="ContactInfo"
+                                               class="form-control"
+                                               placeholder="Email or Phone" />
+                                        <label asp-for="ContactInfo">Contact Info</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input asp-for="JobTitle"
+                                               class="form-control"
+                                               placeholder="e.g. Front-end Developer" />
+                                        <label asp-for="JobTitle">Job Title</label>
+                                    </div>
+                                    <span asp-validation-for="JobTitle"
+                                          class="text-danger small"></span>
+                                </div>
+
+                                <div class="col-12">
+                                    <label asp-for="PersonalImage"
+                                           class="form-label">Profile Image</label>
+                                    <input asp-for="PersonalImage"
+                                           type="file"
+                                           class="form-control" />
+                                </div>
+                            </div>
+                            <div class="mt-4 text-end">
+                                <button type="button"
+                                        class="btn btn-primary next-step">
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div class="form-step d-none" data-step="2">
+                            <h5 class="mb-4 text-primary">Step 2: Services</h5>
+                            <div id="services-container" class="mb-3"></div>
+                            <button type="button"
+                                    class="btn btn-outline-primary mb-3"
+                                    onclick="addService()">
+                                <i class="bi bi-plus-lg"></i> Add Service
+                            </button>
+                            <div class="d-flex justify-content-between">
+                                <button type="button"
+                                        class="btn btn-light prev-step">
+                                    Back
+                                </button>
+                                <button type="button"
+                                        class="btn btn-primary next-step">
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div class="form-step d-none" data-step="3">
+                            <h5 class="mb-4 text-primary">Step 3: Projects</h5>
+                            <div id="projects-container" class="mb-3"></div>
+                            <button type="button"
+                                    class="btn btn-outline-primary mb-3"
+                                    onclick="addProject()">
+                                <i class="bi bi-plus-lg"></i> Add Project
+                            </button>
+                            <div class="d-flex justify-content-between">
+                                <button type="button"
+                                        class="btn btn-light prev-step">
+                                    Back
+                                </button>
+                                <button type="submit"
+                                        class="btn btn-success">
+                                    Submit Portfolio
+                                </button>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" />
+
+@section Scripts {
+    <script>
+        let currentStep = 1;
+        const totalSteps = document.querySelectorAll('.form-step').length;
+
+        function updateProgress() {
+            const pct = (currentStep / totalSteps) * 100;
+            document.getElementById('formProgress').style.width = pct + '%';
+        }
+
+        document.querySelectorAll('.next-step').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelector(`.form-step[data-step="${currentStep}"]`).classList.add('d-none');
+                currentStep++;
+                document.querySelector(`.form-step[data-step="${currentStep}"]`).classList.remove('d-none');
+                updateProgress();
+            });
+        });
+
+        document.querySelectorAll('.prev-step').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelector(`.form-step[data-step="${currentStep}"]`).classList.add('d-none');
+                currentStep--;
+                document.querySelector(`.form-step[data-step="${currentStep}"]`).classList.remove('d-none');
+                updateProgress();
+            });
+        });
+
+        function addService() {
+            const container = document.getElementById("services-container");
+            const idx = container.children.length;
+            const card = document.createElement('div');
+            card.className = 'card mb-3 shadow-sm';
+            card.innerHTML = `
+                <div class="card-body">
+                    <div class="form-floating mb-3">
+                        <input name="Services[${idx}].ServiceName"
+                               class="form-control"
+                               placeholder="Service Name" />
+                        <label>Service Name</label>
+                    </div>
+                    <div class="form-floating">
+                        <textarea name="Services[${idx}].ServiceDescription"
+                                  class="form-control"
+                                  placeholder="Service Description"
+                                  style="height:100px"></textarea>
+                        <label>Service Description</label>
+                    </div>
+                </div>`;
+            container.appendChild(card);
+        }
+
+        function getServiceOptions() {
+            return Array.from(
+                document.querySelectorAll('#services-container input[name$=".ServiceName"]')
+            ).map((inp, idx) =>
+                `<option value="${idx}">${inp.value || 'Service #' + (idx+1)}</option>`
+            );
+        }
+
+        function addProject() {
+            const container = document.getElementById("projects-container");
+            const idx = container.children.length;
+            const options = getServiceOptions().join('');
+            const card = document.createElement('div');
+            card.className = 'card mb-3 shadow-sm';
+            card.innerHTML = `
+                <div class="card-body">
+                    <div class="form-floating mb-3">
+                        <select name="Projects[${idx}].ServiceIndex"
+                                class="form-select">
+                            ${options}
+                        </select>
+                        <label>Select Linked Service</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input name="Projects[${idx}].ProjectName"
+                               class="form-control"
+                               placeholder="Project Name" />
+                        <label>Project Name</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <textarea name="Projects[${idx}].ProjectDescription"
+                                  class="form-control"
+                                  placeholder="Project Description"
+                                  style="height:100px"></textarea>
+                        <label>Project Description</label>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6 form-floating">
+                            <input type="date"
+                                   name="Projects[${idx}].StartDate"
+                                   class="form-control"
+                                   placeholder="Start Date" />
+                            <label>Start Date</label>
+                        </div>
+                        <div class="col-md-6 form-floating">
+                            <input type="date"
+                                   name="Projects[${idx}].EndDate"
+                                   class="form-control"
+                                   placeholder="End Date" />
+                            <label>End Date</label>
+                        </div>
+                    </div>
+                    <div class="form-floating">
+                        <input name="Projects[${idx}].ProjectAttachments"
+                               class="form-control"
+                               placeholder="Attachment URL" />
+                        <label>Attachment URL</label>
+                    </div>
+                </div>`;
+            container.appendChild(card);
+        }
+
+        updateProgress();
+    </script>
+}
