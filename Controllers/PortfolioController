@@ -1,0 +1,291 @@
+using System.Security.Claims;
+using System.Text;
+using CareerLaunchpad.DTOs;
+using CareerLaunchpad.Interfaces;
+using CareerLaunchpad.Interfaces.CareerLaunchpad.Services;
+using CareerLaunchpad.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CareerLaunchpad.Controllers
+{
+    [Authorize]
+    public class PortfolioController : Controller
+    {
+        private readonly IPortfolioRepository _repo;
+        private readonly IAIPortfolio _ai;
+        private readonly IWebHostEnvironment _env;
+
+
+        public PortfolioController(IPortfolioRepository repo, IAIPortfolio ai, IWebHostEnvironment env)
+        {
+            _repo = repo;
+            _ai = ai;
+            _env = env;
+        }
+
+        // GET: /Portfolio
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            var userId = GetUserLoginId();
+            var portfolios = await _repo.GetAllForUserAsync(userId);
+
+            var dtos = portfolios
+                .Select(p => new PortfolioDto
+                {
+                    PortfolioId = p.PortfolioId,
+                    FirstName = p.FirstName,
+                    LastName = p.LastName,
+                    ExistingImageUrl = p.PersonalImage,
+                    ContactInfo = p.ContactInfo,
+                    Bio = p.Bio
+                })
+                .ToList();
+
+            return View(dtos);
+        }
+
+        // GET: /Portfolio/Create
+        [HttpGet]
+        public IActionResult Create()
+            => View(new PortfolioDto());
+
+        // POST: /Portfolio/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(PortfolioDto dto)
+        {
+            if (!ModelState.IsValid)
+                return View(dto);
+
+            // 1) Handle image upload
+            string imageUrl = null;
+            if (dto.PersonalImage != null && dto.PersonalImage.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
+                Directory.CreateDirectory(uploadsFolder);
+
+                var uniqueFileName = Guid.NewGuid() + Path.GetExtension(dto.PersonalImage.FileName);
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                await using var stream = new FileStream(filePath, FileMode.Create);
+                await dto.PersonalImage.CopyToAsync(stream);
+                imageUrl = "/uploads/" + uniqueFileName;
+            }
+
+            // 2) Map Services from DTO
+            var services = dto.Services?
+                .Select(s => new Service
+                {
+                    ServiceName = s.ServiceName,
+                    Servicedescription = s.ServiceDescription
+                }).ToList() ?? new List<Service>();
+
+            // 3) Map Projects with ServiceIndex
+            var projects = dto.Projects?
+                .Select(p => new Project
+                {
+                    ProjectName = p.ProjectName,
+                    Description = p.ProjectDescription,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate,
+                    ProjectAttachments = p.ProjectAttachments,
+                    Service = services[p.ServiceIndex]
+                }).ToList() ?? new List<Project>();
+
+            // 4) Build Portfolio model
+            var portfolio = new Portfolio
+            {
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                JobTitle = dto.JobTitle,       
+                ContactInfo = dto.ContactInfo,
+                PersonalImage = imageUrl,
+                EndUserId = GetUserLoginId(),
+                Services = services,
+                Projects = projects
+            };
+
+            // 5) Generate AI-powered bio
+            portfolio.Bio = await _ai.GenerateBioAsync(portfolio);
+            portfolio.CreatedDate = DateTime.UtcNow;
+
+            // 6) Persist and redirect
+            await _repo.CreateAsync(portfolio);
+            return RedirectToAction(nameof(Index));
+        }
+        // inside PortfolioController
+        [HttpGet]
+        public async Task<IActionResult> View(int id)
+        {
+            var portfolio = await _repo.GetByIdAsync(id);
+            if (portfolio == null || portfolio.EndUserId != GetUserLoginId())
+                return NotFound();
+
+            portfolio.Bio = await _ai.GenerateBioAsync(portfolio);
+
+            var html =_ai.BuildHtmlPreview(portfolio);
+            return Content(html,"text/html");
+        }
+
+        // GET: /Portfolio/Edit/5
+        [HttpGet]
+        // PortfolioController.cs
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var existing = await _repo.GetByIdAsync(id);
+            if (existing == null || existing.EndUserId != GetUserLoginId())
+                return NotFound();
+
+            var dto = new PortfolioDto
+            {
+                PortfolioId = existing.PortfolioId,
+                FirstName = existing.FirstName,
+                LastName = existing.LastName,
+                JobTitle = existing.JobTitle,
+                ContactInfo = existing.ContactInfo,
+                ExistingImageUrl = existing.PersonalImage,
+                Services = existing.Services
+                    .Select(s => new ServiceDto
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        ServiceName = s.ServiceName,
+                        ServiceDescription = s.Servicedescription
+                    })
+                    .ToList(),
+                Projects = existing.Projects
+                    .Select(p => new ProjectDto
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        ProjectName = p.ProjectName,
+                        ProjectDescription = p.Description,
+                        StartDate = p.StartDate,
+                        EndDate = p.EndDate,
+                        ProjectAttachments = p.ProjectAttachments,
+                        ServiceIndex = existing.Services.IndexOf(p.Service)
+                    })
+                    .ToList()
+            };
+
+            return View(dto);
+        }
+
+        // POST: /Portfolio/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, PortfolioDto dto)
+        {
+            if (id != dto.PortfolioId)
+                return NotFound();
+
+            if (!ModelState.IsValid)
+                return View(dto);
+
+            var existing = await _repo.GetByIdAsync(id);
+            if (existing == null || existing.EndUserId != GetUserLoginId())
+                return NotFound();
+
+            // 1) Handle optional new image
+            var imageUrl = existing.PersonalImage;
+            if (dto.PersonalImage?.Length > 0)
+            {
+                var uploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                Directory.CreateDirectory(uploads);
+                var fn = Guid.NewGuid() + Path.GetExtension(dto.PersonalImage.FileName);
+                var path = Path.Combine(uploads, fn);
+                await using var fs = new FileStream(path, FileMode.Create);
+                await dto.PersonalImage.CopyToAsync(fs);
+                imageUrl = "/uploads/" + fn;
+            }
+
+            // 2) Remap Services
+            var services = dto.Services
+                .Select(s => new Service
+                {
+                    ServiceName = s.ServiceName,
+                    Servicedescription = s.ServiceDescription
+                })
+                .ToList();
+
+            // 3) Remap Projects
+            var projects = dto.Projects
+                .Select(p => new Project
+                {
+                    ProjectName = p.ProjectName,
+                    Description = p.ProjectDescription,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate,
+                    ProjectAttachments = p.ProjectAttachments,
+                    Service = services.ElementAtOrDefault(p.ServiceIndex)
+                })
+                .ToList();
+
+            // 4) Update fields
+            existing.FirstName = dto.FirstName;
+            existing.LastName = dto.LastName;
+            existing.JobTitle = dto.JobTitle;
+            existing.ContactInfo = dto.ContactInfo;
+            existing.PersonalImage = imageUrl;
+            existing.Services = services;
+            existing.Projects = projects;
+
+            // 5) Regenerate AI Bio
+            existing.Bio = await _ai.GenerateBioAsync(existing);
+
+            // 6) Persist
+            await _repo.UpdateAsync(existing);
+
+            return RedirectToAction(nameof(Index));
+        }
+
+
+        private string GetUserLoginId()
+       => User.FindFirstValue(ClaimTypes.NameIdentifier)
+          ?? throw new InvalidOperationException("User not logged in");
+
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var port = await _repo.GetByIdAsync(id);
+            if (port == null || port.EndUserId != GetUserLoginId())
+                return NotFound();
+
+            await _repo.DeleteAsync(id);
+            return RedirectToAction(nameof(Index));
+        }
+        [HttpGet]
+public async Task<IActionResult> AIDarkPreview(int id)
+{
+    var port = await _repo.GetPortfolioWithDetailsAsync(id);
+    if (port == null) return NotFound();
+
+    var html = _ai.BuildHtmlPreviewDark(port);
+    return Content(html, "text/html; charset=utf-8");
+}
+
+        [HttpGet]
+        public async Task<IActionResult> PdfPreview(int id)
+        {
+            var Portfolio = await _repo.GetPortfolioWithDetailsAsync(id);
+            if (Portfolio == null)
+                return NotFound();
+
+            var pdfBytes = PortfolioPdfGenerator.GeneratePdf(Portfolio, _env.WebRootPath);
+            return File(pdfBytes, "application/pdf");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PdfDownload(int id)
+        {
+            var Portfolio = await _repo.GetPortfolioWithDetailsAsync(id);
+            if (Portfolio == null)
+                return NotFound();
+
+            var pdfBytes = PortfolioPdfGenerator.GeneratePdf(Portfolio, _env.WebRootPath);
+            return File(pdfBytes, "application/pdf", "portfolio.pdf");
+        }
+    }
+}
