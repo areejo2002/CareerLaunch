@@ -1,0 +1,74 @@
+using CareerLaunchpad.Interfaces;
+using CareerLaunchpad.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace CareerLaunchpad.Repositories
+{
+    public class PortfolioRepository : IPortfolioRepository
+    {
+        private readonly ApplicationDbContext _context;
+
+        public PortfolioRepository(ApplicationDbContext context)
+            => _context = context;
+
+        public async Task CreateAsync(Portfolio portfolio)
+        {
+            _context.Portfolios.Add(portfolio);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<Portfolio>> GetAllForUserAsync(string endUserId)
+        {
+            return await _context.Portfolios
+                                 .Where(p => p.EndUserId == endUserId)
+                                 .Include(p => p.Services)
+                                 .Include(p => p.Projects)
+                                 .ToListAsync();
+        }
+
+        public async Task<Portfolio?> GetByIdAsync(int id)
+        {
+            return await _context.Portfolios
+                                 .Include(p => p.Services)
+                                 .Include(p => p.Projects)
+                                 .FirstOrDefaultAsync(p => p.PortfolioId == id);
+        }
+
+        public async Task UpdateAsync(Portfolio portfolio)
+        {
+            _context.Portfolios.Update(portfolio);
+            await _context.SaveChangesAsync();
+        }
+        public async Task<Portfolio?> GetPortfolioWithDetailsAsync(int id)
+        {
+            return await _context.Portfolios
+                .Include(p => p.Services)
+                .Include(p => p.Projects)
+                .FirstOrDefaultAsync(p => p.PortfolioId == id);
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var portfolio = await _context.Portfolios
+                                          .FirstOrDefaultAsync(p => p.PortfolioId == id);
+            if (portfolio != null)
+            {
+                _context.Portfolios.Remove(portfolio);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<List<Portfolio>> GetAllAsync()
+        {
+            return await _context.Portfolios
+                            .Include(p => p.EndUser)    
+
+                                 .Include(p => p.Services)
+                                 .Include(p => p.Projects)
+                                 .ToListAsync();
+        }
+    }
+}
