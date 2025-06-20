@@ -1,0 +1,254 @@
+﻿@page
+@model CareerLaunchpad.Areas.Identity.Pages.Account.RegisterModel
+
+@{
+    ViewData["Title"] = "Register";
+    Layout = "_Layout";
+}
+<style>
+    footer {
+        display: none !important;
+    }
+</style>
+
+<!-- Split-screen professional register design -->
+<style>
+    :root {
+        --bs-primary: #00574C;
+        --bs-primary-rgb: 0,87,76;
+    }
+
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+
+    .login-wrapper {
+        display: flex;
+        min-height: 100vh;
+        overflow: hidden;
+    }
+
+    .login-left {
+        flex: 1;
+        background: linear-gradient(135deg, #00574C 0%, #009688 100%);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        text-align: center;
+    }
+
+        .login-left h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .login-left p {
+            font-size: 1.25rem;
+            line-height: 1.4;
+            max-width: 360px;
+        }
+
+    .login-right {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: #f5f7fa;
+    }
+
+    .login-card {
+        width: 100%;
+        max-width: 420px;
+        background: rgba(255,255,255,0.85);
+        backdrop-filter: blur(10px);
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+    }
+
+        .login-card .card-body {
+            padding: 2rem;
+        }
+
+        .login-card .card-footer {
+            background: transparent;
+            border-top: none;
+        }
+
+        .login-card .form-floating > .form-control:focus {
+            box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+        }
+
+        .login-card .form-floating > label {
+            color: #495057;
+        }
+
+        .login-card .btn-primary {
+            background: var(--bs-primary);
+            border-color: var(--bs-primary);
+        }
+
+            .login-card .btn-primary:hover {
+                background: #004f45;
+                border-color: #004f45;
+            }
+</style>
+
+<div class="login-wrapper">
+    <!-- Left panel (hidden on small devices) -->
+    <div class="login-left d-none d-md-flex">
+        <i class="bi bi-person-plus-fill fs-1 mb-3"></i>
+        <h1>Join Our Community</h1>
+        <p>Create your account to start building professional resumes &amp; portfolios that stand out.</p>
+    </div>
+
+    <!-- Right panel: the register form -->
+    <div class="login-right">
+        <div class="card login-card">
+            <div class="card-body">
+                <h3 class="text-center text-primary fw-bold mb-4">Register</h3>
+
+                <form id="registerForm"
+                      method="post"
+                      asp-route-returnUrl="@Model.ReturnUrl"
+                      class="needs-validation"
+                      novalidate>
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <!-- First Name -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.FirstName"
+                               class="form-control"
+                               placeholder="First Name"
+                               required />
+                        <label asp-for="Input.FirstName">
+                            <i class="bi bi-person-fill me-1"></i>First Name
+                        </label>
+                        <div class="invalid-feedback">
+                            @Html.ValidationMessageFor(m => m.Input.FirstName)
+                        </div>
+                    </div>
+
+                    <!-- Last Name -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.LastName"
+                               class="form-control"
+                               placeholder="Last Name"
+                               required />
+                        <label asp-for="Input.LastName">
+                            <i class="bi bi-person-fill me-1"></i>Last Name
+                        </label>
+                        <div class="invalid-feedback">
+                            @Html.ValidationMessageFor(m => m.Input.LastName)
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Email"
+                               class="form-control"
+                               placeholder="name@example.com"
+                               type="email"
+                               required />
+                        <label asp-for="Input.Email">
+                            <i class="bi bi-envelope-fill me-1"></i>Email
+                        </label>
+                        <div class="invalid-feedback">
+                            @Html.ValidationMessageFor(m => m.Input.Email)
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Password"
+                               class="form-control"
+                               placeholder="Password"
+                               type="password"
+                               required />
+                        <label asp-for="Input.Password">
+                            <i class="bi bi-lock-fill me-1"></i>Password
+                        </label>
+                        <div class="invalid-feedback">
+                            @Html.ValidationMessageFor(m => m.Input.Password)
+                        </div>
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="form-floating mb-4">
+                        <input asp-for="Input.ConfirmPassword"
+                               class="form-control"
+                               placeholder="Confirm Password"
+                               type="password"
+                               required />
+                        <label asp-for="Input.ConfirmPassword">
+                            <i class="bi bi-lock-fill me-1"></i>Confirm Password
+                        </label>
+                        <div class="invalid-feedback">
+                            @Html.ValidationMessageFor(m => m.Input.ConfirmPassword)
+                        </div>
+                    </div>
+
+                    <!-- Register Button -->
+                    <button type="submit"
+                            class="btn btn-primary btn-lg w-100 py-2 mb-3">
+                        Register
+                    </button>
+
+                    <!-- Link to Login -->
+                    <div class="d-flex justify-content-end small">
+                        <a asp-page="./Login">Already have an account? Log in</a>
+                    </div>
+                </form>
+            </div>
+
+            @if ((Model.ExternalLogins?.Count ?? 0) > 0)
+            {
+                <div class="card-footer p-4">
+                    <h6 class="text-center text-secondary mb-3">Or register with</h6>
+                    <div class="d-grid gap-2">
+                        @foreach (var provider in Model.ExternalLogins!)
+                        {
+                            <form asp-page="./ExternalLogin"
+                                  asp-route-returnUrl="@Model.ReturnUrl"
+                                  method="post">
+                                <button type="submit"
+                                        name="provider"
+                                        value="@provider.Name"
+                                        class="btn btn-outline-primary d-flex align-items-center justify-content-center py-2">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>
+                                    @provider.DisplayName
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+          'use strict';
+          var forms = document.querySelectorAll('.needs-validation');
+          Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+              if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+              }
+              form.classList.add('was-validated');
+            }, false);
+          });
+        })();
+    </script>
+}
