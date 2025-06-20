@@ -1,0 +1,166 @@
+<!-- Views/Admin/Index.cshtml -->
+@using Newtonsoft.Json
+@model CareerLaunchpad.Models.DashboardViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Dashboard";
+
+}
+<div class="d-flex justify-content-end mb-3">
+    <form asp-area="Identity" asp-page="/Account/Logout" method="post">
+        <button type="submit" class="btn btn-danger rounded-pill">Logout</button>
+    </form>
+</div>
+<div class="container-fluid">
+    <!-- existing dashboard... -->
+
+<div class="container-fluid">
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card card-highlight p-4">
+                <i class="fas fa-users icon"></i>
+                <div>Total Users</div>
+                <div class="stat">@Model.TotalUsers</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-highlight p-4">
+                <i class="fas fa-file-alt icon"></i>
+                <div>Total Resumes</div>
+                <div class="stat">@Model.TotalResumes</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-highlight p-4">
+                <i class="fas fa-briefcase icon"></i>
+                <div>Total Portfolios</div>
+                <div class="stat">@Model.TotalPortfolios</div>
+            </div>
+        </div>
+       
+
+    <!-- All Users Table -->
+    <div class="card shadow-sm mb-5">
+        <div class="card-header" style="background: var(--accent); color: #fff;">
+            <i class="fas fa-users me-2"></i>All Users
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-striped align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Username</th>
+                        ,<th>Full Name</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Users?.Any() == true)
+                    {
+                        int i = 1;
+                        foreach (var u in Model.Users)
+                        {
+                            <tr>
+                                <td>@i</td>
+                                <td>@u.UserName</td>
+                                    <td>@(u.FirstName + " " + u.LastName)</td>
+                                <td>@u.Email</td>
+                            </tr>
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="3" class="text-center py-4">No users found</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent Resumes Table -->
+            
+
+
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-gradient">Resumes Trend (Last 6 Months)</div>
+                <div class="card-body">
+                    <canvas id="resumesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-gradient">Portfolios Trend (Last 6 Months)</div>
+                <div class="card-body">
+                    <canvas id="portfoliosChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const baseOptions = {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend:    { display: false },
+                tooltip:   { mode: 'index', intersect: false }
+              },
+              scales: {
+                x: { grid: { display: false }, ticks: { color: '#444' } },
+                y: { grid: { color: 'rgba(200,200,200,0.2)' }, ticks: { color: '#444', beginAtZero: true } }
+              }
+            };
+
+            // Resumes Bar Chart
+            (function(){
+              const ctx = document.getElementById('resumesChart').getContext('2d');
+              new Chart(ctx, {
+                type: 'bar',
+                data: {
+                  labels: @Html.Raw(JsonConvert.SerializeObject(Model.ResumesPerMonth.Keys)),
+                  datasets: [{
+                    label: 'Resumes',
+                    data: @Html.Raw(JsonConvert.SerializeObject(Model.ResumesPerMonth.Values)),
+                    backgroundColor: 'var(--secondary)',
+                    borderRadius: 6,
+                    barPercentage: 0.6,
+                    categoryPercentage: 0.5
+                  }]
+                },
+                options: baseOptions
+              });
+            })();
+
+            // Portfolios Bar Chart
+            (function(){
+              const ctx = document.getElementById('portfoliosChart').getContext('2d');
+              new Chart(ctx, {
+                type: 'bar',
+                data: {
+                  labels: @Html.Raw(JsonConvert.SerializeObject(Model.PortfoliosPerMonth.Keys)),
+                  datasets: [{
+                    label: 'Portfolios',
+                    data: @Html.Raw(JsonConvert.SerializeObject(Model.PortfoliosPerMonth.Values)),
+                    backgroundColor: 'var(--accent)',
+                    borderRadius: 6,
+                    barPercentage: 0.6,
+                    categoryPercentage: 0.5
+                  }]
+                },
+                options: baseOptions
+              });
+            })();
+        </script>
+}
+
+}
