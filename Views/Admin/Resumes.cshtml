@@ -1,0 +1,65 @@
+﻿@using CareerLaunchpad.Models
+@model IEnumerable<Resume>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Manage Resumes";
+}
+
+<div class="container-fluid">
+    <h2 class="mb-4">Manage Resumes</h2>
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
+                <th>Created</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Any())
+            {
+                var idx = 1;
+                foreach (var r in Model)
+                {
+                    <tr>
+                        <td>@idx</td>
+                        <td>@r.FirstName</td>
+                        <td>@r.LastName</td>
+                        <td>@r.Email</td>
+                        <td>@r.CreatedDate.ToString("MMM dd, yyyy")</td>
+                        <td class="text-center">
+                            <a asp-controller="Resume"
+                               asp-action="Details"
+                               asp-route-id="@r.ResumeId"
+                               class="btn btn-sm btn-outline-primary me-1">
+                                View
+                            </a>
+                            <form asp-controller="Admin"
+                                  asp-action="DeleteResume"
+                                  asp-route-id="@r.ResumeId"
+                                  method="post"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Are you sure?');">
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-danger">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    idx++;
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center py-4">No resumes found.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

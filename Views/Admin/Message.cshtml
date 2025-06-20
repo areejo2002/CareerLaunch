@@ -1,0 +1,48 @@
+﻿@model IEnumerable<CareerLaunchpad.Models.ContactRequest>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Messages / Contact Requests";
+}
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-gradient text-white">
+        <i class="fas fa-envelope me-2"></i>Messages / Contact Requests
+    </div>
+    <div class="card-body">
+        <div class="mb-3 d-flex justify-content-end">
+            <input type="search" class="form-control w-25" placeholder="Search by name or email" />
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Message</th>
+                        <th>Created</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model)
+                    {
+                        <tr>
+                            <td>@m.Name</td>
+                            <td>@m.Email</td>
+                            <td>@m.Message</td>
+                            <td>@m.CreatedDate.ToString("MMM dd, yyyy")</td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-danger" title="Delete" asp-controller="Admin" asp-action="DeleteMessage" asp-route-id="@m.Id">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="5" class="text-center py-4">No messages found</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

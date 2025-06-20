@@ -1,0 +1,35 @@
+﻿@using CareerLaunchpad.Models
+@model IEnumerable<Portfolio>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Manage Portfolios";
+}
+
+<div class="container-fluid">
+    <h2 class="mb-4">Manage Portfolios</h2>
+    <table class="table table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Name</th>
+                <th>User</th>
+                <th>Created</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.Title</td>
+                    <td>@p.EndUser?.UserName</td>  <!-- الآن EndUser محمّل -->
+                    <td>@p.CreatedDate.ToString("MMM dd, yyyy")</td>
+                    <td class="text-end">
+                        <a asp-controller="Portfolio" asp-action="Details" asp-route-id="@p.PortfolioId" class="btn btn-sm btn-outline-primary">View</a>
+                        <!-- إلخ -->
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
