@@ -1,0 +1,84 @@
+// Controllers/AdminController.cs
+using System.Linq;
+using System.Threading.Tasks;
+using CareerLaunchpad.Interfaces;
+using CareerLaunchpad.Models;
+using CareerLaunchpad.Repositories;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CareerLaunchpad.Controllers
+{
+    [Authorize(Roles = "Admin")]
+    public class AdminController : Controller
+    {
+        private readonly IStatisticsService _stats;
+        private readonly IUserRepository _userRepo;
+        private readonly IResumeRepository _resumeRepo;
+        private readonly IPortfolioRepository _portfolioRepo;
+        private readonly IContactRequestsRepository _contactRepo;
+
+
+        public AdminController(IStatisticsService stats, IUserRepository userRepo ,IResumeRepository resumeRepo,
+            IPortfolioRepository portfolioRepo,IContactRequestsRepository contactRepo)
+        {
+            _stats = stats;
+            _userRepo = userRepo;
+            _resumeRepo = resumeRepo;
+            _portfolioRepo = portfolioRepo;
+            _contactRepo = contactRepo;
+
+        }
+
+        // GET: /Admin
+        public async Task<IActionResult> Index()
+        {
+            // Fetch list of users
+            var users = (await _userRepo.GetAllAsync()).ToList();
+
+            var vm = new DashboardViewModel
+            {
+                TotalUsers = await _stats.GetTotalUsersAsync(),
+                TotalResumes = await _stats.GetTotalResumesAsync(),
+                TotalPortfolios = await _stats.GetTotalPortfoliosAsync(),
+                ResumesPerMonth = await _stats.GetResumesPerMonthAsync(6),
+                PortfoliosPerMonth = await _stats.GetPortfoliosPerMonthAsync(6),
+                RecentResumes = await _stats.GetRecentResumesAsync(10),
+
+                Users = users
+            };
+
+            return View(vm);
+        }
+     public async Task<IActionResult> Users()
+        {
+            var users = await _userRepo.GetAllAsync();
+            return View(users);
+        }
+
+        // GET: /Admin/Resumes
+        public async Task<IActionResult> Resumes()
+                {
+            var resumes = await _resumeRepo.GetAllAsync();
+            return View(resumes);
+        }
+
+        
+
+        // GET: /Admin/Portfolios
+        public async Task<IActionResult> Portfolios()
+        {
+            var ports = await _portfolioRepo.GetAllAsync();
+            return View(ports);
+        }
+         public async Task<IActionResult> Message()
+        {
+            var msgs = await _contactRepo.GetAllAsync();
+            return View(msgs);
+        }
+
+        // GET: /Admin/Projects
+
+    }
+    }
+   
