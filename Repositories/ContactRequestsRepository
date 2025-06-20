@@ -1,0 +1,36 @@
+// CareerLaunchpad/Repositories/ContactRequestsRepository.cs
+using CareerLaunchpad.Interfaces;
+using CareerLaunchpad.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace CareerLaunchpad.Repositories
+{
+    public class ContactRequestsRepository : IContactRequestsRepository
+    {
+        private readonly ApplicationDbContext _db;
+
+        public ContactRequestsRepository(ApplicationDbContext db)
+        {
+            _db = db;
+        }
+
+        public async Task<List<ContactRequest>> GetAllAsync()
+        {
+            return await _db.Set<ContactRequest>()
+                            .ToListAsync();
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var msg = await _db.Set<ContactRequest>()
+                               .FirstOrDefaultAsync(c => c.Id == id);
+            if (msg != null)
+            {
+                _db.Set<ContactRequest>().Remove(msg);
+                await _db.SaveChangesAsync();
+            }
+        }
+    }
+}
