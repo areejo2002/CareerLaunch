@@ -1,0 +1,155 @@
+@model List<CareerLaunchpad.DTOs.PortfolioDto>
+@{
+    ViewData["Title"] = "My Portfolios";
+    Layout = "_Layout";
+}
+
+<!-- Theme color overrides and hide PDF Preview button -->
+<style>
+    :root {
+        --bs-primary: #00574C; /* Dark Teal */
+        --bs-secondary: #009688; /* Turquoise */
+    }
+
+    /* Hide the PDF Preview button */
+    .pdf-preview-btn {
+        display: none !important;
+    }
+
+    /* Buttons all share this look */
+    .action-btn {
+        border-radius: .25rem;
+        padding: .375rem .75rem;
+        font-size: .875rem;
+        transition: background-color .2s, color .2s;
+    }
+
+    .action-btn {
+        color: var(--bs-primary);
+        border: 1px solid var(--bs-primary);
+        background: transparent;
+    }
+
+        .action-btn:hover {
+            background: var(--bs-primary);
+            color: #fff;
+        }
+
+    /* Card styling */
+    .portfolio-card {
+        border: 2px solid var(--bs-secondary);
+        border-radius: .75rem;
+        transition: transform .2s, box-shadow .2s;
+    }
+
+        .portfolio-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+    /* Avatar */
+    .portfolio-img {
+        width: 96px;
+        height: 96px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid var(--bs-primary);
+    }
+
+    .text-secondary {
+        color: var(--bs-secondary) !important;
+    }
+</style>
+
+<div class="bg-light min-vh-100 py-5">
+    <div class="container">
+        <h2 class="mb-4">My Portfolios</h2>
+        <div class="mb-4">
+            <a asp-action="Create" class="action-btn" style="background:var(--bs-primary); color:#fff;">
+                <i class="bi bi-plus-lg me-1"></i> Add New Portfolio
+            </a>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            @foreach (var port in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm portfolio-card">
+                        <div class="card-body d-flex flex-column align-items-center">
+
+                            @* Profile image *@
+                            @if (!string.IsNullOrEmpty(port.ExistingImageUrl))
+                            {
+                                <img src="@port.ExistingImageUrl"
+                                     class="portfolio-img mb-3"
+                                     alt="@port.FirstName @port.LastName" />
+                            }
+
+                            @* Name and title *@
+                            <h4 class="fw-bold">@port.FirstName @port.LastName</h4>
+                            @if (!string.IsNullOrWhiteSpace(port.JobTitle))
+                            {
+                                <h6 class="text-secondary">@port.JobTitle</h6>
+                            }
+
+                            @* Bio *@
+                            @if (!string.IsNullOrWhiteSpace(port.Bio))
+                            {
+                                <p class="text-center flex-grow-1">@port.Bio</p>
+                            }
+
+                            @* Contact *@
+                            @if (!string.IsNullOrWhiteSpace(port.ContactInfo))
+                            {
+                                <p><strong>Contact:</strong> @port.ContactInfo</p>
+                            }
+
+                            @* Actions *@
+                            <div class="mt-auto d-flex flex-wrap justify-content-center gap-2">
+                                <!-- Template 1 = normal View -->
+                                <a asp-action="View"
+                                   asp-route-id="@port.PortfolioId"
+                                   class="action-btn">
+                                    Template 1
+                                </a>
+
+                                <!-- Template 2 = your AI‐driven preview -->
+                                <a asp-action="AIDarkPreview"
+                                   asp-route-id="@port.PortfolioId"
+                                   class="action-btn"
+                                   target="_blank">
+                                    Template 2
+                                </a>
+
+                                <!-- Edit -->
+                                <a asp-action="Edit"
+                                   asp-route-id="@port.PortfolioId"
+                                   class="action-btn">
+                                    Edit
+                                </a>
+
+                                <!-- Delete -->
+                                <form asp-action="Delete"
+                                      asp-route-id="@port.PortfolioId"
+                                      method="post"
+                                      onsubmit="return confirm('Delete this portfolio?');"
+                                      style="display:inline-block">
+                                    <button type="submit"
+                                            class="action-btn">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // PDF Preview has been hidden via CSS
+    </script>
+}
