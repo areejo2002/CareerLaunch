@@ -1,0 +1,26 @@
+using System.Collections.Generic;
+using CareerLaunchpad.DTOs;
+using Microsoft.AspNetCore.Http;
+
+namespace CareerLaunchpad.DTOs
+{
+    public class PortfolioDto
+    {
+        public int PortfolioId { get; set; }
+        public IFormFile? PersonalImage { get; set; }
+        public string? ExistingImageUrl { get; set; }
+
+        public string? Bio { get; set; }
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+
+        public string? JobTitle { get; set; }
+
+
+        public List<ServiceDto> Services { get; set; } = new();
+
+        public List<ProjectDto> Projects { get; set; } = new();
+
+        public string? ContactInfo { get; set; }
+    }
+}
