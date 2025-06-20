@@ -1,0 +1,254 @@
+using CareerLaunchpad.DTOs;
+using CareerLaunchpad.Models;
+using CareerLaunchpad.Repositories;
+using CareerLaunchpad.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using System.Threading.Tasks;
+
+public class ResumeController : Controller
+{
+    private readonly IResumeRepository _repo;
+    private readonly IAIResume _ai;
+
+    public ResumeController(IResumeRepository repo, IAIResume ai)
+    {
+        _repo = repo;
+        _ai = ai;
+    }
+
+    [HttpGet]
+    [Authorize]
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(ResumeDto dto)
+    {
+        if (!ModelState.IsValid)
+            return View(dto);
+
+        var combinedInput = $@"
+Name: {dto.FirstName} {dto.LastName}
+Email: {dto.Email}
+Phone Number: {dto.PhoneNumber}
+
+Bio:
+{dto.Bio}
+
+Education:
+{dto.Educations}
+
+Experience:
+{dto.Experiences}
+
+Certificates:
+{dto.Certificates}
+";
+
+        var resume = await _ai.ResumeParse(combinedInput);
+
+        if (resume.Educations != null)
+        {
+            foreach (var edu in resume.Educations)
+                edu.Resume = resume;
+        }
+        if (resume.Experiences != null)
+        {
+            foreach (var exp in resume.Experiences)
+                exp.Resume = resume;
+        }
+        if (resume.Certificates != null)
+        {
+            foreach (var cert in resume.Certificates)
+                cert.Resume = resume;
+        }
+        if (resume.Skills != null)
+        {
+            foreach (var skill in resume.Skills)
+                skill.Resume = resume;
+        }
+        if (resume.Languages != null)
+        {
+            foreach (var lang in resume.Languages)
+                lang.Resume = resume;
+        }
+
+         resume.EndUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        resume.CreatedDate = DateTime.UtcNow;
+
+        await _repo.AddResume(resume);
+        await _repo.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Index));
+    }
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var resume = await _repo.GetResumeWithDetailsAsync(id);
+        if (resume == null || resume.EndUserId != GetUserLoginId())
+            return NotFound();
+
+        var dto = new ResumeDto
+        {
+            ResumeId = resume.ResumeId,
+            FirstName = resume.FirstName,
+            LastName = resume.LastName,
+            Email = resume.Email,
+            PhoneNumber = resume.PhoneNumber,
+            Bio = resume.Bio,
+            Educations = resume.Educations != null
+                ? string.Join(Environment.NewLine, resume.Educations.Select(e =>
+                    $"{e.DegreeType} in {e.Major} at {e.CollageName} ({e.StartDate}-{e.EndDate}), GPA: {e.GPA}"))
+                : "",
+            Experiences = resume.Experiences != null
+                ? string.Join(Environment.NewLine, resume.Experiences.Select(x =>
+                    $"{x.Title} at {x.Company} ({x.StartDate}-{x.EndDate}), Duties: {x.Duties}"))
+                : "",
+            Certificates = resume.Certificates != null
+                ? string.Join(Environment.NewLine, resume.Certificates.Select(c =>
+                    $"{c.TopicName} from {c.ProviderName} ({c.StartDate}-{c.EndDate}), GPA: {c.GPA}"))
+                : "",
+            
+
+        };
+
+        return View(dto);
+    }
+
+    // [POST] Edit
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, ResumeDto dto)
+    {
+        if (id != dto.ResumeId)
+            return NotFound();
+
+        if (!ModelState.IsValid)
+            return View(dto);
+
+        var combinedInput = $@"
+Name: {dto.FirstName} {dto.LastName}
+Email: {dto.Email}
+Phone Number: {dto.PhoneNumber}
+
+Bio:
+{dto.Bio}
+
+Education:
+{dto.Educations}
+
+Experience:
+{dto.Experiences}
+
+Certificates:
+{dto.Certificates}
+";
+
+        var resume = await _ai.ResumeParse(combinedInput);
+
+        var oldResume = await _repo.GetResumeWithDetailsAsync(id);
+        if (oldResume == null || oldResume.EndUserId != GetUserLoginId())
+            return NotFound();
+
+        oldResume.FirstName = resume.FirstName;
+        oldResume.LastName = resume.LastName;
+        oldResume.Email = resume.Email;
+        oldResume.PhoneNumber = resume.PhoneNumber;
+        oldResume.Bio = resume.Bio;
+        oldResume.Educations = resume.Educations;
+        oldResume.Experiences = resume.Experiences;
+        oldResume.Certificates = resume.Certificates;
+        oldResume.Skills = resume.Skills;
+        oldResume.Languages = resume.Languages;
+
+        _repo.Update(oldResume);
+        await _repo.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    private string GetUserLoginId()
+    {
+        return User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!;
+    }
+    public async Task<IActionResult> Index()
+    {
+        var userId = GetUserLoginId();
+
+        var resumes = await _repo.GetResumesByUserIdAsync(userId);
+
+        var resumesDto = resumes.Select(r => new ResumeDto
+        {
+            ResumeId = r.ResumeId,
+            FirstName = r.FirstName,
+            LastName = r.LastName,
+            Email = r.Email,
+            PhoneNumber = r.PhoneNumber,
+            Bio = r.Bio,
+        }).ToList();
+
+        return View(resumesDto);
+    }
+
+
+[HttpPost]
+    [ValidateAntiForgeryToken]
+    [HttpPost]
+    
+    public async Task<IActionResult> Delete(int id)
+    {
+        var resume = await _repo.GetByIdAsync(id);
+        if (resume == null)
+            return NotFound();
+
+        _repo.Delete(resume);
+        await _repo.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Index));
+    }
+    [HttpGet]
+   public async Task<IActionResult> OnlinePreview(int id)
+{
+    var resume = await _repo.GetResumeWithDetailsAsync(id);
+    if (resume == null || resume.EndUserId != GetUserLoginId())
+        return NotFound();
+
+    var html = _ai.BuildHtmlPreview(resume);
+    return Content(html, "text/html");
+}
+
+    [HttpGet]
+    public async Task<IActionResult> PdfPreview(int id)
+    {
+        var resume = await _repo.GetResumeWithDetailsAsync(id);
+        if (resume == null)
+            return NotFound();
+
+        var pdfBytes = ResumePdfGenerator.GeneratePdf(resume);
+        return File(pdfBytes, "application/pdf");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> PdfDownload(int id)
+    {
+        var resume = await _repo.GetResumeWithDetailsAsync(id);
+        if (resume == null)
+            return NotFound();
+
+        var pdfBytes = ResumePdfGenerator.GeneratePdf(resume);
+        return File(pdfBytes, "application/pdf", "resume.pdf"); 
+    }
+
+
+
+
+
+
+
+}
