@@ -1,0 +1,115 @@
+using CareerLaunchpad.Models;
+using CareerLaunchpad.DTOs;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace CareerLaunchpad.Repositories
+{
+    public class ResumeRepository : IResumeRepository
+    {
+        private readonly ApplicationDbContext _context;
+
+        public ResumeRepository(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+   
+        public async Task<List<ResumeDto>> GetAllResumes()
+        {
+            return await _context.Resumes
+                .Include(r => r.Educations)
+                .Include(r => r.Experiences)
+                .Include(r => r.Certificates)
+                .Select(r => new ResumeDto
+                {
+                    FirstName = r.FirstName,
+
+                    LastName = r.LastName,
+                    Email = r.Email,
+                    PhoneNumber = r.PhoneNumber,
+
+                    Bio = r.Bio,
+                }).ToListAsync();
+        }
+ 
+        public async Task<IEnumerable<Resume>> GetAllAsync()
+        {
+            return await _context.Resumes
+                .Include(r => r.EndUser)         
+                .Include(r => r.Educations)
+                .Include(r => r.Experiences)
+                .Include(r => r.Certificates)
+                .ToListAsync();
+        }
+
+  
+        public async Task<Resume> GetByIdAsync(int id)
+        {
+            return await _context.Resumes
+                .Include(r => r.Educations)
+                .Include(r => r.Experiences)
+                .Include(r => r.Certificates)
+                .FirstOrDefaultAsync(r => r.ResumeId == id);
+        }
+
+     
+        public async Task AddResume(Resume resume)
+        {
+            await _context.Resumes.AddAsync(resume);
+          
+        }
+
+
+     
+        public void Update(Resume resume)
+        {
+            _context.Resumes.Update(resume);
+        }
+
+      public void Delete(Resume resume)
+        {
+            _context.Resumes.Remove(resume);
+        }
+
+   
+        public async Task<bool> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+     
+        public async Task<bool> Exists(int id)
+        {
+            return await _context.Resumes.AnyAsync(r => r.ResumeId == id);
+        }
+
+        
+     
+            public async Task<Resume> GetResumeWithDetailsAsync(int id)
+            {
+                return await _context.Resumes
+                    .Include(r => r.Educations)
+                    .Include(r => r.Experiences)
+                    .Include(r => r.Certificates)
+                    .Include(r => r.Skills)
+                    .Include(r => r.Languages)
+                    .FirstOrDefaultAsync(r => r.ResumeId == id);
+            }
+
+        public async Task<List<Resume>> GetResumesByUserIdAsync(string userId)
+        {
+            return await _context.Resumes
+                .Where(r => r.EndUserId == userId)
+                .Include(r => r.Skills)
+                .Include(r => r.Languages)
+                .Include(r => r.Educations)
+                .Include(r => r.Experiences)
+                .Include(r => r.Certificates)
+                .ToListAsync();
+        }
+
+    }
+
+}
